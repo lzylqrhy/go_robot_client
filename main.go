@@ -127,7 +127,7 @@ func ProcessProtocol(ctx context.Context, wg *sync.WaitGroup, ch chan []byte)  {
 		case pbBuff := <-ch:
 			c.ProcessProtocols(ch, pbBuff)
 		case <-frame.C:
-			c.Update()
+			c.Update(ch)
 		}
 	}
 }
