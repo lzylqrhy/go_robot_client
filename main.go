@@ -52,10 +52,17 @@ func createConnect(ctx context.Context, wg *sync.WaitGroup, sAddr string) {
 	defer conn.Close()
 	// 读取上下文数据
 	index, _ := ctx.Value("index").(int)
+	// 创建客户端
+	c := NewClient(index)
+	subCtx := context.WithValue(ctx, "player", c)
+	ch := make(chan []byte, 10)
+	wg.Add(1)
+	go func(){
+		defer wg.Done()
+		c.OnConnected(ch)
+	}()
 	// 处理协议
 	wg.Add(1)
-	subCtx := context.WithValue(ctx, "player", NewClient(index))
-	ch := make(chan []byte, 10)
 	go ProcessProtocol(subCtx, wg, ch)
 	for {
 		select {

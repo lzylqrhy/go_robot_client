@@ -13,7 +13,11 @@ func NewClient(index int) *Client {
 	return c
 }
 
-func (c *Client)Update() {
+func (c *Client)Update(ch chan<- []byte) {
+
+}
+
+func (c *Client)OnConnected(ch chan<- []byte)  {
 
 }
 
