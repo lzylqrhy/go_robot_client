@@ -11,22 +11,30 @@ type ProtocolHeader struct {
 	Len uint16
 }
 
-func (header *ProtocolHeader)Bytes() *bytes.Buffer {
-	buff := new(bytes.Buffer)
-	if err := binary.Write(buff, binary.LittleEndian, header); err != nil {
-		fmt.Println("packet protocol failed, header is ", header)
-		return buff
-	}
-	return buff
-}
-
 type Protocol struct {
 	Header  ProtocolHeader
 	Content bytes.Buffer
 }
 
 func (pb *Protocol)Bytes() []byte {
-	pb.Header.Bytes().Write(pb.Content.Bytes())
-	return pb.Bytes()
+	buff := new(bytes.Buffer)
+	if err := binary.Write(buff, binary.LittleEndian, pb.Header); err != nil {
+		fmt.Println("packet protocol failed, header is ", pb.Header)
+		return nil
+	}
+	buff.Write(pb.Content.Bytes())
+	return buff.Bytes()
 }
 
+func (pb *Protocol)AppendNumber(value interface{}) {
+	if err := binary.Write(&pb.Content, binary.LittleEndian, value); err != nil {
+		fmt.Println("append number failed, err: ", err)
+	}
+}
+
+func (pb *Protocol)AppendString(lenByteNum uint8, value string) {
+	if err := binary.Write(&pb.Content, binary.LittleEndian, lenByteNum); err != nil {
+		fmt.Println("append number failed, err: ", err)
+	}
+	pb.Content.WriteString(value)
+}
