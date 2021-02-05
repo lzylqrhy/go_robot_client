@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func createConnect(ctx context.Context, wg *sync.WaitGroup, sAddr string) {
+func createConnect(ctx context.Context, wg *sync.WaitGroup, sAddr string, pd PlatformData) {
 	defer wg.Done()
 	tcpAddr, err := net.ResolveTCPAddr("tcp", sAddr)
 	if err != nil {
@@ -38,7 +38,8 @@ func createConnect(ctx context.Context, wg *sync.WaitGroup, sAddr string) {
 	chRead := make(chan []byte, 100)
 	chWrite := make(chan []byte, 10)
 	// 创建客户端
-	c := NewClient(index)
+	c := NewClient(uint32(index), pd)
+
 	// 处理协议
 	wg.Add(1)
 	subCtx := context.WithValue(myRootCtx, "player", c)

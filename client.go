@@ -6,15 +6,16 @@ import (
 )
 
 type Client struct {
-	serial int
-	pid int32
-
+	serial uint32
+	PlatformData
 
 }
 
-func NewClient(index int) *Client {
+func NewClient(index uint32, pb PlatformData) *Client {
 	c := new(Client)
 	c.serial = index
+	c.PID = pb.PID
+	c.Nickname = pb.Nickname
 	return c
 }
 

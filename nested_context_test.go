@@ -14,11 +14,16 @@ func TestNestedContext(t *testing.T){
 	)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	subCtx := context.WithValue(ctx, "name", "index")
+	sCtx := context.WithValue(ctx, "rand", "random")
+	subCtx := context.WithValue(sCtx, "name", "index")
 	for i := 0; i < 2; i++ {
 		wg.Add(1)
 		go func(ctx context.Context, n int) {
 			defer wg.Done()
+			rd, bOk := ctx.Value("rand").(string)
+			if bOk {
+				fmt.Println("rand key = ", rd)
+			}
 			name, bOk := ctx.Value("name").(string)
 			if !bOk {
 				fmt.Println("type of context's value is not int")
