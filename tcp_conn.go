@@ -109,16 +109,17 @@ func processProtocol(ctx context.Context, wg *sync.WaitGroup, chRead <-chan []by
 	}
 	// 连接成功事件
 	c.OnConnected(chWrite)
-	frame := time.NewTicker(time.Millisecond * 200)
+	frameTick := time.NewTicker(time.Millisecond * 200)
 	for {
 		select {
 		case <-ctx.Done(): // 模拟断线事件
+			frameTick.Stop()
 			c.OnDisconnected()
 			fmt.Printf("process protocol %d eixt\n", c.serial)
 			return
 		case pbBuff := <-chRead: // 处理数据
 			c.ProcessProtocols(chWrite, pbBuff)
-		case <-frame.C: // 客户端定时器
+		case <-frameTick.C: // 客户端定时器
 			c.Update(chWrite)
 		}
 	}

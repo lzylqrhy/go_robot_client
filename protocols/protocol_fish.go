@@ -15,3 +15,13 @@ func PacketPing() []byte {
 	}
 	return buff.Bytes()
 }
+
+type String struct {
+	len uint8
+	data string
+}
+
+type ProtocolPing struct {
+	ProtocolHeader
+}
+

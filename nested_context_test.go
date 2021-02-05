@@ -3,10 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
-	"os/signal"
 	"sync"
-	"syscall"
 	"testing"
 	"time"
 )
@@ -54,15 +51,9 @@ func TestNestedContext(t *testing.T){
 			}
 		}(subCtx, i)
 	}
-	waitForASignal1()
+	//waitForASignal()
+	time.Sleep(time.Second * 5)
 	cancel()
 	wg.Wait()
 	fmt.Println("context test over")
-}
-
-func waitForASignal1()  {
-	sig := make(chan os.Signal)
-	signal.Notify(sig, os.Interrupt)
-	signal.Notify(sig, syscall.SIGTERM)
-	<-sig
 }
