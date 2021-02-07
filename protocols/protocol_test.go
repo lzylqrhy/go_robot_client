@@ -39,12 +39,11 @@ func TestProtocol_AppendStringUint16(t *testing.T){
 
 func TestProtocol_GetNumber(t *testing.T){
 	var pb Protocol
-	pb.AppendNumber(uint16(3))
-	pb.AppendNumber(uint32(4))
+	pb.AppendNumber(ProtocolHeader{3, 4})
 	pb.AppendNumber(float32(4.4))
 	var (
 		cmd uint16
-		length uint32
+		length uint16
 		f float32
 	)
 	err := pb.GetNumber(&cmd)
@@ -88,7 +87,7 @@ func TestProtocol_Bytes(t *testing.T){
 	pb.AppendNumber(uint16(2))
 	pb.AppendNumber(float32(4.4))
 	pb.AppendStringUint16(str)
-	fmt.Println("buff:",pb.Bytes())
+	fmt.Println("buff:",pb.Bytes(3))
 	var (
 		b bool
 		i8 int8

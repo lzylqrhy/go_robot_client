@@ -8,62 +8,79 @@ import (
 	"math"
 )
 
+const HeadSize = 4	// 协议头长度
+
+// 协议头
 type ProtocolHeader struct {
 	Cmd uint16
 	Len uint16
 }
 
+// 协议数据类
 type Protocol struct {
+	Head ProtocolHeader
 	Content bytes.Buffer
 }
 
-func (pb *Protocol)Bytes() []byte {
-	return pb.Content.Bytes()
+// 设置协议号
+func (p *Protocol)SetCmd(cmd uint16) {
+	p.Head.Cmd = cmd
 }
 
-func (pb *Protocol)AppendNumber(value interface{}) {
-	if err := binary.Write(&pb.Content, binary.LittleEndian, value); err != nil {
+// 将协议序列化为字节切片
+func (p *Protocol)Bytes() []byte {
+	p.Head.Len = uint16(p.Content.Len() + HeadSize)
+	buff := new(bytes.Buffer)
+	if err := binary.Write(buff, binary.LittleEndian, &p.Head); err != nil {
+		fmt.Println("append number failed, err: ", err)
+	}
+	buff.Write(p.Content.Bytes())
+	return buff.Bytes()
+}
+
+func (p *Protocol)AppendNumber(value interface{}) {
+	if err := binary.Write(&p.Content, binary.LittleEndian, value); err != nil {
 		fmt.Println("append number failed, err: ", err)
 	}
 }
 
-func (pb *Protocol)AppendStringUint8(value string) {
+func (p *Protocol)AppendStringUint8(value string) {
 	length := len(value)
 	if length >= math.MaxUint8 {
 		panic("length of string is greater than max uint8")
 	}
-	pb.appendString(uint8(length), value)
+	p.appendString(uint8(length), value)
 }
 
-func (pb *Protocol)AppendStringUint16(value string) {
+func (p *Protocol)AppendStringUint16(value string) {
 	length := len(value)
 	if length >= math.MaxUint16 {
 		panic("length of string is greater than max uint16")
 	}
-	pb.appendString(uint16(length), value)
+	p.appendString(uint16(length), value)
 }
 
-func (pb *Protocol)appendString(length interface{}, value string) {
-	pb.AppendNumber(length)
-	pb.Content.WriteString(value)
+func (p *Protocol)appendString(length interface{}, value string) {
+	p.AppendNumber(length)
+	p.Content.WriteString(value)
 }
 
-func (pb *Protocol)GetNumber(ref interface{}) error {
-	return binary.Read(&pb.Content, binary.LittleEndian, ref)
+func (p *Protocol)GetNumber(ref interface{}) error {
+	return binary.Read(&p.Content, binary.LittleEndian, ref)
 }
 
-func (pb *Protocol)GetStringUint8() (string, error) {
+func (p *Protocol)GetStringUint8() (string, error) {
 	var length uint8
-	return pb.getString(&length)
+	return p.getString(&length)
 }
 
-func (pb *Protocol)GetStringUint16() (string, error) {
+func (p *Protocol)GetStringUint16() (string, error) {
 	var length uint16
-	return pb.getString(&length)
+	return p.getString(&length)
 }
 
-func (pb *Protocol)getString(length interface{}) (string, error) {
-	if err := pb.GetNumber(length); err != nil {
+func (p *Protocol)getString(length interface{}) (string, error) {
+	if err := p.GetNumber(length); err != nil {
 		return "", err
 	}
 	var n int
@@ -75,9 +92,10 @@ func (pb *Protocol)getString(length interface{}) (string, error) {
 	default:
 		return "", errors.New("the type of length of string is invalid")
 	}
-	buff := pb.Content.Next(n)
+	buff := p.Content.Next(n)
 	if len(buff) < n {
 		return "", errors.New("buff can't fill the string")
 	}
 	return string(buff), nil
 }
+
