@@ -12,7 +12,8 @@ import (
 
 func main() {
 	// 读取配置
-	servAddr := "192.168.0.194:7710"
+	// servAddr := "192.168.0.194:7710"
+	servAddr := "192.168.0.194:7712"
 	// 机器人数量
 	userStart := uint(2)
 	userEnd := uint(2)
@@ -23,7 +24,8 @@ func main() {
 	for i, user := range userList {
 		wg.Add(1)
 		subCtx := context.WithValue(ctx, "index", i)
-		go myNet.TcpConnect(subCtx, &wg, servAddr, user)
+		//go myNet.TcpConnect(subCtx, &wg, servAddr, user)
+		go myNet.WSConnect(subCtx, &wg, servAddr, user)
 	}
 	// 监听信号
 	waitForASignal()

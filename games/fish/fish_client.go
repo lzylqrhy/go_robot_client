@@ -40,18 +40,24 @@ func (c *Client)ProcessProtocols(ch chan<- []byte, p *protocols.Protocol) bool {
 	fmt.Printf("cmd:0x%04x, data: %v\n", p.Head.Cmd, p.Content)
 	switch p.Head.Cmd {
 	case protocols.SyncTimeCode:
-		return c.ProcessSyncTime(ch, p)
+		return c.processSyncTime(ch, p)
 	case protocols.S2CLoginCode:
-		return c.ProcessLogin(ch, p)
+		return c.processLogin(ch, p)
 	case protocols.EnterRoomCode:
-		return c.ProcessEnterRoom(ch, p)
+		return c.processEnterRoom(ch, p)
 	case protocols.SceneInfoCode:
-		return c.ProcessSceneInfo(ch, p)
+		return c.processSceneInfo(ch, p)
+	case protocols.PlayerSeatCode:
+		return c.processSeatsInfo(ch, p)
+	case protocols.FishListCode:
+		return c.processFishList(ch, p)
+	case protocols.BulletListCode:
+		return c.processBulletList(ch, p)
 	}
 	return true
 }
 
-func (c *Client) ProcessSyncTime(ch chan<- []byte, p *protocols.Protocol) bool {
+func (c *Client) processSyncTime(ch chan<- []byte, p *protocols.Protocol) bool {
 	s2cSync := new(protocols.S2CSyncTime)
 	s2cSync.Parse(p)
 	fmt.Println(s2cSync)
@@ -68,7 +74,7 @@ func (c *Client) ProcessSyncTime(ch chan<- []byte, p *protocols.Protocol) bool {
 	return true
 }
 
-func (c *Client) ProcessLogin(ch chan<- []byte, p *protocols.Protocol) bool {
+func (c *Client) processLogin(ch chan<- []byte, p *protocols.Protocol) bool {
 	var s2cLogin protocols.S2CLogin
 	s2cLogin.Parse(p)
 	if s2cLogin.Status == 1 {
@@ -87,7 +93,7 @@ func (c *Client) ProcessLogin(ch chan<- []byte, p *protocols.Protocol) bool {
 	return false
 }
 
-func (c *Client) ProcessEnterRoom(ch chan<- []byte, p *protocols.Protocol) bool {
+func (c *Client) processEnterRoom(ch chan<- []byte, p *protocols.Protocol) bool {
 	var s2cEnterRoom protocols.S2CEnterRoom
 	s2cEnterRoom.Parse(p)
 	if s2cEnterRoom.Result != 0 {
@@ -107,9 +113,31 @@ func (c *Client) ProcessEnterRoom(ch chan<- []byte, p *protocols.Protocol) bool 
 	return true
 }
 
-func (c *Client) ProcessSceneInfo(ch chan<- []byte, p *protocols.Protocol) bool {
+func (c *Client) processSceneInfo(ch chan<- []byte, p *protocols.Protocol) bool {
 	var s2cSceneInfo protocols.S2CGetSceneInfo
 	s2cSceneInfo.Parse(p)
-	fmt.Printf("client index=%d, pid=%d get scene successfully\n", c.index, c.ptData.PID)
+	fmt.Printf("client index=%d, pid=%d get scene info successfully\n", c.index, c.ptData.PID)
+	return true
+}
+
+func (c *Client) processSeatsInfo(ch chan<- []byte, p *protocols.Protocol) bool {
+	var s2cSeats protocols.S2CSeatsInfo
+	s2cSeats.Parse(p)
+	fmt.Printf("client index=%d, pid=%d get seat list successfully\n", c.index, c.ptData.PID)
+	return true
+}
+
+func (c *Client) processFishList(ch chan<- []byte, p *protocols.Protocol) bool {
+	var s2cFish protocols.S2CFishList
+	s2cFish.Parse(p)
+	fmt.Printf("client index=%d, pid=%d get fish list successfully\n", c.index, c.ptData.PID)
+	fmt.Println(s2cFish.FishList)
+	return true
+}
+
+func (c *Client) processBulletList(ch chan<- []byte, p *protocols.Protocol) bool {
+	var s2cBullet protocols.S2CBulletList
+	s2cBullet.Parse(p)
+	fmt.Printf("client index=%d, pid=%d get bullet list successfully\n", c.index, c.ptData.PID)
 	return true
 }

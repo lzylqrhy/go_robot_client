@@ -50,7 +50,7 @@ func TestProtocol_GetNumber(t *testing.T){
 	if err != nil {
 		fmt.Println(err)
 	}
-	pb.GetNumber(&length)
+	err = pb.GetNumber(&length)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -87,7 +87,7 @@ func TestProtocol_Bytes(t *testing.T){
 	pb.AppendNumber(uint16(2))
 	pb.AppendNumber(float32(4.4))
 	pb.AppendStringUint16(str)
-	fmt.Println("buff:",pb.Bytes(3))
+	fmt.Println("buff:",pb.Bytes())
 	var (
 		b bool
 		i8 int8

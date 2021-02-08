@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"sync"
 	"testing"
 	"time"
@@ -61,4 +62,45 @@ func TestNestedContext(t *testing.T){
 	cancel()
 	wg.Wait()
 	fmt.Println("context test over")
+}
+
+func TestMapChannel(t *testing.T) {
+	var (
+		wg sync.WaitGroup
+	)
+	ctx, cancel := context.WithCancel(context.Background())
+	wg.Add(1)
+	ch := make(chan int, 3)
+	go func() {
+		defer wg.Done()
+		for n := range ch {
+			//select {
+			//case <-ctx.Done():
+			//	return
+			//default:
+				fmt.Println(n)
+			//}
+		}
+		fmt.Println("It's over 1")
+	}()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for {
+			select {
+			case <-ctx.Done():
+				fmt.Println("It's over")
+				return
+			default:
+				ch<- rand.Int()
+				time.Sleep(2*time.Second)
+			}
+		}
+		fmt.Println("It's over 2")
+	}()
+	time.Sleep(time.Second * 10)
+	cancel()
+	close(ch)
+	wg.Wait()
+	fmt.Println("channel test over")
 }

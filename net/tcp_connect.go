@@ -2,6 +2,7 @@ package net
 
 import (
 	"bytes"
+	"compress/zlib"
 	"context"
 	"encoding/binary"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"github/go-robot/protocols"
 	"github/go-robot/util"
 	"io"
+	"io/ioutil"
 	"net"
 	"sync"
 	"time"
@@ -77,6 +79,16 @@ func TcpConnect(ctx context.Context, wg *sync.WaitGroup, sAddr string, pd *commo
 	}
 }
 
+func ZipDecode(src []byte) []byte {
+	br := bytes.NewReader(src)
+	r, err := zlib.NewReaderDict(br, []byte("FK3G"))
+	util.CheckError(err)
+	defer r.Close()
+	dst, err := ioutil.ReadAll(r)
+	util.CheckError(err)
+	return dst
+}
+
 func readBuff(conn net.Conn) (*protocols.Protocol, error) {
 	buff := make([]byte, protocols.HeadSize)
 	if _, err := io.ReadFull(conn, buff); err != nil {
@@ -96,6 +108,13 @@ func readBuff(conn net.Conn) (*protocols.Protocol, error) {
 			fmt.Println("read protocol content failed, error is ", err)
 			return nil, err
 		}
+		//const mark uint16 = 0x8000
+		//if ptData.Head.Cmd & mark == mark {
+		//	ptData.Head.Cmd &= ^mark
+		//	ptData.Content.Write(ZipDecode(leftBuff))
+		//}else {
+		//	ptData.Content.Write(leftBuff)
+		//}
 		ptData.Content.Write(leftBuff)
 	}
 	return ptData, nil
