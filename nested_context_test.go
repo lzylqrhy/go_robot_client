@@ -104,3 +104,37 @@ func TestMapChannel(t *testing.T) {
 	wg.Wait()
 	fmt.Println("channel test over")
 }
+
+type base struct {
+	n int
+	U int
+}
+
+func (p *base) SetN()  {
+	p.n = 10
+}
+
+func (p *base) Do()  {
+	p.SetN()
+}
+
+type derive struct {
+	m int
+	base
+}
+
+func (p *derive) SetN()  {
+	//p.base.SetN()
+	p.m = 10
+}
+
+func (p *derive) Print()  {
+	fmt.Println(*p)
+}
+
+func TestInherit(t *testing.T) {
+	var d derive
+	d.U = 10
+	d.Do()
+	d.Print()
+}

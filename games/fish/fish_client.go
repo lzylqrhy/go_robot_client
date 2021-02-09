@@ -4,45 +4,44 @@ import (
 	"fmt"
 	"github/go-robot/common"
 	"github/go-robot/protocols"
-	"strings"
 )
 
-type Client struct {
-	index  uint32
-	ptData *common.PlatformData
-	sevTime uint32
+type FClient struct {
+	common.ClientBase
 }
 
-func NewClient(index uint32, pd *common.PlatformData) *Client {
-	c := new(Client)
-	c.index = index
-	c.ptData = pd
+func NewClient(index uint32, pd *common.PlatformData) common.Client {
+	c := new(FClient)
+	c.Index = index
+	c.PtData = pd
 	fmt.Printf("new client: %v \n", c)
-	fmt.Printf("new client: %v \n", *c.ptData)
+	fmt.Printf("new client: %v \n", *c.PtData)
 	return c
 }
 
-func (c *Client)Update(ch chan<- []byte) {
+func (c *FClient)Update(ch chan<- []byte) {
 	//fmt.Printf("client serial=%d update\n", c.serial)
 }
 
-func (c *Client)OnConnected(ch chan<- []byte)  {
+func (c *FClient)OnConnected(ch chan<- []byte)  {
 	var ping protocols.C2SSyncTime
 	ch<- ping.Bytes()
-	fmt.Printf("client index=%d connected\n", c.index)
+	fmt.Printf("client index=%d connected\n", c.Index)
 }
 
-func (c *Client)OnDisconnected()  {
-	fmt.Printf("client index=%d disconnected\n", c.index)
+func (c *FClient)OnDisconnected()  {
+	fmt.Printf("client index=%d disconnected\n", c.Index)
 }
 
-func (c *Client)ProcessProtocols(ch chan<- []byte, p *protocols.Protocol) bool {
+func (c *FClient)ProcessProtocols(ch chan<- []byte, p *protocols.Protocol) bool {
 	fmt.Printf("cmd:0x%04x, data: %v\n", p.Head.Cmd, p.Content)
+	isCommon, isOk := c.ProcessCommonProtocols(ch, p)
+	if isCommon {
+		return isOk
+	}
 	switch p.Head.Cmd {
-	case protocols.SyncTimeCode:
-		return c.processSyncTime(ch, p)
-	case protocols.S2CLoginCode:
-		return c.processLogin(ch, p)
+	case protocols.PlayerCode:
+		return c.processPlayerInfo(ch, p)
 	case protocols.EnterRoomCode:
 		return c.processEnterRoom(ch, p)
 	case protocols.SceneInfoCode:
@@ -57,52 +56,23 @@ func (c *Client)ProcessProtocols(ch chan<- []byte, p *protocols.Protocol) bool {
 	return true
 }
 
-func (c *Client) processSyncTime(ch chan<- []byte, p *protocols.Protocol) bool {
-	s2cSync := new(protocols.S2CSyncTime)
-	s2cSync.Parse(p)
-	fmt.Println(s2cSync)
-	c.sevTime = s2cSync.TimeStamp
-	// 请求登录
-	var s2cLogin protocols.C2SLogin
-	s2cLogin.IsChildGame = false
-	var strBuilder strings.Builder
-	strBuilder.WriteString(c.ptData.LoginToken)
-	strBuilder.WriteString(":0x20:1")
-	s2cLogin.Token = strBuilder.String()
-	fmt.Println("session:", s2cLogin.Token)
-	ch<- s2cLogin.Bytes()
+func (c *FClient) processPlayerInfo(_ chan<- []byte, p *protocols.Protocol) bool {
+	var s2cPlayer protocols.S2CPlayerInfo
+	s2cPlayer.Parse(p)
+	fmt.Printf("client index=%d, pid=%d get player info successfully, player=%v\n", c.Index, c.PtData.PID, s2cPlayer)
 	return true
 }
 
-func (c *Client) processLogin(ch chan<- []byte, p *protocols.Protocol) bool {
-	var s2cLogin protocols.S2CLogin
-	s2cLogin.Parse(p)
-	if s2cLogin.Status == 1 {
-		// 登录成功
-		fmt.Printf("client index=%d, pid=%d login successfully\n", c.index, c.ptData.PID)
-		// 发送资源加载完成
-		var c2sLoaded protocols.C2SResourceLoaded
-		ch<- c2sLoaded.Bytes()
-		// 进入房间
-		var c2sEnterRoom protocols.C2SEnterRoom
-		c2sEnterRoom.RoomID = 20001
-		ch<- c2sEnterRoom.Bytes()
-		return true
-	}
-	fmt.Printf("client index=%d, pid=%d login failed, status: %d\n", c.index, c.ptData.PID, s2cLogin.Status)
-	return false
-}
-
-func (c *Client) processEnterRoom(ch chan<- []byte, p *protocols.Protocol) bool {
+func (c *FClient) processEnterRoom(ch chan<- []byte, p *protocols.Protocol) bool {
 	var s2cEnterRoom protocols.S2CEnterRoom
 	s2cEnterRoom.Parse(p)
 	if s2cEnterRoom.Result != 0 {
 		// 进入失败
 		fmt.Printf("client index=%d, pid=%d enter room=%d failed, result: %d\n",
-			c.index, c.ptData.PID, s2cEnterRoom.RoomID, s2cEnterRoom.Result)
+			c.Index, c.PtData.PID, s2cEnterRoom.RoomID, s2cEnterRoom.Result)
 		return false
 	}
-	fmt.Printf("client index=%d, pid=%d enter room=%d successfully\n", c.index, c.ptData.PID, s2cEnterRoom.RoomID)
+	fmt.Printf("client index=%d, pid=%d enter room=%d successfully\n", c.Index, c.PtData.PID, s2cEnterRoom.RoomID)
 	// 请求场景信息
 	var c2sSceneInfo protocols.C2SGetSceneInfo
 	ch<- c2sSceneInfo.Bytes()
@@ -113,31 +83,31 @@ func (c *Client) processEnterRoom(ch chan<- []byte, p *protocols.Protocol) bool 
 	return true
 }
 
-func (c *Client) processSceneInfo(ch chan<- []byte, p *protocols.Protocol) bool {
+func (c *FClient) processSceneInfo(ch chan<- []byte, p *protocols.Protocol) bool {
 	var s2cSceneInfo protocols.S2CGetSceneInfo
 	s2cSceneInfo.Parse(p)
-	fmt.Printf("client index=%d, pid=%d get scene info successfully\n", c.index, c.ptData.PID)
+	fmt.Printf("client index=%d, pid=%d get scene info successfully\n", c.Index, c.PtData.PID)
 	return true
 }
 
-func (c *Client) processSeatsInfo(ch chan<- []byte, p *protocols.Protocol) bool {
+func (c *FClient) processSeatsInfo(ch chan<- []byte, p *protocols.Protocol) bool {
 	var s2cSeats protocols.S2CSeatsInfo
 	s2cSeats.Parse(p)
-	fmt.Printf("client index=%d, pid=%d get seat list successfully\n", c.index, c.ptData.PID)
+	fmt.Printf("client index=%d, pid=%d get seat list successfully\n", c.Index, c.PtData.PID)
 	return true
 }
 
-func (c *Client) processFishList(ch chan<- []byte, p *protocols.Protocol) bool {
+func (c *FClient) processFishList(ch chan<- []byte, p *protocols.Protocol) bool {
 	var s2cFish protocols.S2CFishList
 	s2cFish.Parse(p)
-	fmt.Printf("client index=%d, pid=%d get fish list successfully\n", c.index, c.ptData.PID)
+	fmt.Printf("client index=%d, pid=%d get fish list successfully\n", c.Index, c.PtData.PID)
 	fmt.Println(s2cFish.FishList)
 	return true
 }
 
-func (c *Client) processBulletList(ch chan<- []byte, p *protocols.Protocol) bool {
+func (c *FClient) processBulletList(ch chan<- []byte, p *protocols.Protocol) bool {
 	var s2cBullet protocols.S2CBulletList
 	s2cBullet.Parse(p)
-	fmt.Printf("client index=%d, pid=%d get bullet list successfully\n", c.index, c.ptData.PID)
+	fmt.Printf("client index=%d, pid=%d get bullet list successfully\n", c.Index, c.PtData.PID)
 	return true
 }

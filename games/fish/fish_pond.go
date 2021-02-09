@@ -20,7 +20,6 @@ type Player struct {
 	Caliber uint32
 	CaliberLV uint8
 	Status uint16
-	
 }
 
 type Pond struct {

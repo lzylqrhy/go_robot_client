@@ -3,6 +3,7 @@ package protocols
 import "github/go-robot/util"
 
 const (
+	PlayerCode = 0x101	// 玩家个人信息
 	EnterRoomCode = 0x301	// 进入房间
 	SceneInfoCode = 0x305	// 请求场景信息
 	PlayerSeatCode = 0x306	// 鱼池座位列表信息
@@ -10,6 +11,27 @@ const (
 	BulletListCode = 0x308	// 鱼池子弹列表信息
 	TransmitCode = 0x318	// 转发行为
 )
+
+type S2CPlayerInfo struct {
+	CharID     uint32
+	Figure     string
+	Nick       string
+	LV         uint8
+	Exp        uint32
+	UpgradeExp uint32
+}
+
+func (p *S2CPlayerInfo) Parse(pb *Protocol) {
+	var err error
+	util.CheckError(pb.GetNumber(&p.CharID))
+	p.Figure, err = pb.GetStringUint8()
+	util.CheckError(err)
+	p.Nick, err = pb.GetStringUint8()
+	util.CheckError(err)
+	util.CheckError(pb.GetNumber(&p.LV))
+	util.CheckError(pb.GetNumber(&p.Exp))
+	util.CheckError(pb.GetNumber(&p.UpgradeExp))
+}
 
 type C2SEnterRoom struct {
 	RoomID uint32
@@ -124,6 +146,7 @@ type PtFish struct {
 	OffsetY  uint32
 	OffsetZ  uint32
 	BornTime uint64
+	SwamTime uint32
 }
 
 type S2CFishList struct {

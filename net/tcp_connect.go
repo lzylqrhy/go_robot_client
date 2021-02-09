@@ -7,7 +7,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"github/go-robot/common"
-	"github/go-robot/games"
 	"github/go-robot/games/fish"
 	"github/go-robot/protocols"
 	"github/go-robot/util"
@@ -34,7 +33,7 @@ func TcpConnect(ctx context.Context, wg *sync.WaitGroup, sAddr string, pd *commo
 	chRead := make(chan *protocols.Protocol, 100)
 	chWrite := make(chan []byte, 10)
 	// 创建客户端
-	var c games.Client = fish.NewClient(uint32(index), pd)
+	c := fish.NewClient(uint32(index), pd)
 	// 处理协议
 	wg.Add(1)
 	subCtx := context.WithValue(myRootCtx, "player", c)
@@ -122,7 +121,7 @@ func readBuff(conn net.Conn) (*protocols.Protocol, error) {
 
 func processProtocol(ctx context.Context, wg *sync.WaitGroup, chRead <-chan *protocols.Protocol, chWrite chan<- []byte)  {
 	defer wg.Done()
-	c, bOk := ctx.Value("player").(games.Client)
+	c, bOk := ctx.Value("player").(common.Client)
 	if !bOk {
 		fmt.Println("type of context's value is not a client pointer")
 		return
