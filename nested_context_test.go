@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"math/rand"
 	"sync"
 	"testing"
@@ -137,4 +139,17 @@ func TestInherit(t *testing.T) {
 	d.U = 10
 	d.Do()
 	d.Print()
+	bb := make([]byte, 10)
+	bb[0] = 1
+	fmt.Println(len(bb))
+	bb = bb[:1]
+	fmt.Println(len(bb))
+	obb := []byte("hl")
+	r := bytes.NewReader(obb)
+	sbb := make([]byte, 5)
+	n, err := io.ReadFull(r, sbb)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Print(n)
 }

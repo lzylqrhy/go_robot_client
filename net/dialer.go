@@ -7,10 +7,9 @@ import (
 )
 
 type MyDialer interface {
-	Connect() bool
 	Disconnect()
 	SendPacket(data []byte) bool
 	ReadPacket() <-chan *protocols.Protocol
-	Run(ctx context.Context, wg *sync.WaitGroup)
+	Run(ctx context.Context, wg *sync.WaitGroup) bool
 }
 
