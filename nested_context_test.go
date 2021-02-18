@@ -135,6 +135,9 @@ func (p *derive) Print()  {
 }
 
 func TestInherit(t *testing.T) {
+	b1 := make([]byte, 3)
+	b2 := []byte("wo ai ni")
+	n := copy(b1, b2)
 	var d derive
 	d.U = 10
 	d.Do()
