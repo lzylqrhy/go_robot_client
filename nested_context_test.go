@@ -1,10 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"math/rand"
 	"sync"
 	"testing"
@@ -135,24 +133,41 @@ func (p *derive) Print()  {
 }
 
 func TestInherit(t *testing.T) {
-	b1 := make([]byte, 3)
-	b2 := []byte("wo ai ni")
-	n := copy(b1, b2)
-	var d derive
-	d.U = 10
-	d.Do()
-	d.Print()
-	bb := make([]byte, 10)
-	bb[0] = 1
-	fmt.Println(len(bb))
-	bb = bb[:1]
-	fmt.Println(len(bb))
-	obb := []byte("hl")
-	r := bytes.NewReader(obb)
-	sbb := make([]byte, 5)
-	n, err := io.ReadFull(r, sbb)
-	if err != nil {
-		fmt.Println(err)
+	rand.Seed(time.Now().Unix())
+	for i:=0; i<10; i++ {
+		rn := rand.Uint32()
+		fmt.Println(rn)
 	}
-	fmt.Print(n)
+	b := []byte("wo ai")
+	b = b[:1]
+
+	//m := make(map[int]int)
+	//nn := len(m)
+	//fmt.Println(nn)
+	//m[3] = 4
+	//mv, _ := m[3]
+	//mv = mv + 6
+	//var b0 []byte
+	//b0 = append(b0, "hello"...)
+	//b1 := make([]byte, 3)
+	//b2 := []byte("wo ai ni")
+	//n := copy(b1, b2)
+
+	//var d derive
+	//d.U = 10
+	//d.Do()
+	//d.Print()
+	//bb := make([]byte, 10)
+	//bb[0] = 1
+	//fmt.Println(len(bb))
+	//bb = bb[:1]
+	//fmt.Println(len(bb))
+	//obb := []byte("hl")
+	//r := bytes.NewReader(obb)
+	//sbb := make([]byte, 5)
+	//n, err := io.ReadFull(r, sbb)
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
+	//fmt.Print(n)
 }

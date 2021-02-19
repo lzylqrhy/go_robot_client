@@ -6,13 +6,16 @@ import (
 	"github/go-robot/common"
 	"github/go-robot/games/fish"
 	myNet "github/go-robot/net"
+	"math/rand"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 )
 
 func main() {
+	rand.Seed(time.Now().Unix())
 	// 读取配置
 	// serverAddr := "192.168.0.194:7710"
 	//serverAddr := "127.0.0.1:8080" //"192.168.0.194:7712"
