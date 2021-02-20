@@ -26,10 +26,11 @@ type Client interface {
 
 // 客户端基类
 type ClientBase struct {
-	Index   uint32
-	PtData  *PlatformData
-	SevTime uint32
-	Dialer  myNet.MyDialer
+	Index     uint32
+	PtData    *PlatformData
+	SevTime   uint64
+	LocalTime uint64
+	Dialer    myNet.MyDialer
 }
 
 // 处理公共协议
@@ -45,7 +46,6 @@ func (c *ClientBase) processSyncTime(p *protocols.Protocol) bool {
 	s2cSync := new(protocols.S2CSyncTime)
 	s2cSync.Parse(p)
 	fmt.Println(s2cSync)
-	c.SevTime = s2cSync.TimeStamp
 	// 请求登录
 	var s2cLogin protocols.C2SLogin
 	s2cLogin.IsChildGame = false

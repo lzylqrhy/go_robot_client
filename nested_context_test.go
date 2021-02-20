@@ -139,7 +139,20 @@ func TestInherit(t *testing.T) {
 		fmt.Println(rn)
 	}
 	b := []byte("wo ai")
-	b = b[:1]
+	n := b[:1+copy(b[1:], b[3:])]
+	fmt.Println(n)
+
+	m := make(map[int]int)
+	m[1] = 3
+	m[2] = 4
+	m[3] = 5
+	for k, v := range m {
+		fmt.Println("map element", v)
+		if 2 == k {
+			delete(m, k)
+		}
+	}
+	fmt.Println(m)
 
 	//m := make(map[int]int)
 	//nn := len(m)

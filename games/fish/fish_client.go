@@ -6,6 +6,7 @@ import (
 	myNet "github/go-robot/net"
 	"github/go-robot/protocols"
 	"math/rand"
+	"time"
 )
 
 type FClient struct {
@@ -34,11 +35,21 @@ func NewClient(index uint32, pd *common.PlatformData, dialer myNet.MyDialer) com
 	return c
 }
 
+// 获取服务端的毫秒
+func (c *FClient) getServerTime() uint64 {
+	if 0 == c.LocalTime {
+		return 0
+	}
+	return c.SevTime + (uint64(time.Now().UnixNano() / 1e6) - c.LocalTime)
+}
+
 func (c *FClient)Update() {
 	//fmt.Printf("client serial=%d update\n", c.serial)
 	if !c.isWork {
 		return
 	}
+	// 更新鱼坐标
+	c.pond.mapFish.Update(c.getServerTime())
 	// 处理缓存中的子弹
 	c.cleanBulletCache()
 	// 开火
@@ -75,10 +86,10 @@ func (c *FClient)OnDisconnected()  {
 }
 
 func (c *FClient)ProcessProtocols(p *protocols.Protocol) bool {
-	fmt.Printf("cmd:0x%04x, data: %v\n", p.Head.Cmd, p.Content)
-	isCommon, isOk := c.ProcessCommonProtocols(p)
+	fmt.Printf("cmd:0x%04x\n", p.Head.Cmd)
+	isCommon, isOK := c.ProcessCommonProtocols(p)
 	if isCommon {
-		return isOk
+		return isOK
 	}
 	switch p.Head.Cmd {
 	case protocols.S2CLoginCode:
@@ -158,6 +169,8 @@ func (c *FClient) processSceneInfo(p *protocols.Protocol) bool {
 	var s2cSceneInfo protocols.S2CGetSceneInfo
 	s2cSceneInfo.Parse(p)
 	fmt.Printf("client index=%d, pid=%d get scene info successfully\n", c.Index, c.PtData.PID)
+	c.SevTime = uint64(s2cSceneInfo.ServerTime)
+	c.LocalTime = uint64(time.Now().UnixNano() / 1e6)
 	return true
 }
 

@@ -7,6 +7,7 @@ import (
 	"github/go-robot/games/fish"
 	myNet "github/go-robot/net"
 	"math/rand"
+	//_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"sync"
@@ -40,6 +41,7 @@ func main() {
 		// 开工
 		common.DoWork(ctx, &wg, c, d)
 	}
+	//http.ListenAndServe("0.0.0.0:6060", nil)
 	// 监听信号
 	waitForASignal()
 	cancel()

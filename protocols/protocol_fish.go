@@ -78,7 +78,7 @@ type PtBuff struct {
 
 type S2CGetSceneInfo struct {
 	BGImgID uint32
-	ServerTime uint64
+	ServerTime float64
 	Buffs []PtBuff
 }
 
@@ -149,7 +149,7 @@ type PtFish struct {
 	OffsetX  uint32
 	OffsetY  uint32
 	OffsetZ  uint32
-	BornTime uint64
+	BornTime float64
 	SwamTime uint32
 }
 
@@ -173,7 +173,7 @@ type PtBullet struct {
 	CharID   uint32
 	SkinID   uint32
 	Radian   float32
-	BornTime uint64
+	BornTime float64
 	Buffs    []PtBuff
 }
 
@@ -227,7 +227,7 @@ type S2CFire struct {
 	CharID   uint32
 	SkinID   uint32
 	Radian   float32
-	BornTime uint64
+	BornTime float64
 	Buffs    []PtBuff
 }
 
@@ -328,7 +328,7 @@ type S2CSyncBoom struct {
 }
 
 func (p *S2CSyncBoom) Parse(pb *Protocol) {
-	util.CheckError(pb.GetNumber(&p))
+	util.CheckError(pb.GetNumber(p))
 }
 
 type S2CGenerateFish struct {

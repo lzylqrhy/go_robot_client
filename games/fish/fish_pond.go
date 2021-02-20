@@ -1,5 +1,7 @@
 package fish
 
+import "fmt"
+
 type buff struct {
 	BuffType uint32
 	Data 	 uint32
@@ -14,7 +16,7 @@ type fish struct {
 	OffsetX  uint32
 	OffsetY  uint32
 	OffsetZ  uint32
-	BornTime uint64
+	BornTime float64
 	SwamTime uint32
 }
 
@@ -25,7 +27,7 @@ type bullet struct {
 	CharID   uint32
 	SkinID   uint32
 	Radian   float32
-	BornTime uint64
+	BornTime float64
 	Buffs    []buff
 }
 
@@ -54,6 +56,18 @@ func (p *pond) Init() {
 	p.mapPlayer = make(map[uint32]player, 3)
 }
 
-func (mgr *fishManager)Clear(){
+func (mgr *fishManager) Clear() {
 	*mgr = make(fishManager, 32)
+}
+
+func (mgr *fishManager) Update(t uint64) {
+	for k, v := range *mgr {
+		// 获取路径配置
+		path := ConfMgr.getPathByID(v.PathID)
+		deadLine := uint64(v.BornTime) + uint64(float32(path.SwimDuration) / (float32(v.Speed) / 100)) + uint64(path.StayDuration)
+		if deadLine <= t {
+			delete(*mgr, k)
+		}
+	}
+	fmt.Println("pond fish num = ", len(*mgr))
 }
