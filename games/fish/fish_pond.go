@@ -1,7 +1,5 @@
 package fish
 
-import "fmt"
-
 type buff struct {
 	BuffType uint32
 	Data 	 uint32
@@ -69,5 +67,5 @@ func (mgr *fishManager) Update(t uint64) {
 			delete(*mgr, k)
 		}
 	}
-	fmt.Println("pond fish num = ", len(*mgr))
+	//fmt.Println("pond fish num = ", len(*mgr))
 }

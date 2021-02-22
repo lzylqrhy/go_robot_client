@@ -23,7 +23,7 @@ func main() {
 	serverAddr := "192.168.0.194:7712"
 	// 机器人数量
 	userStart := uint(2)
-	userEnd := uint(2)
+	userEnd := uint(5)
 	// 从平台获取信息
 	userList := common.GetPlatformUserData(userStart, userEnd)
 	var wg sync.WaitGroup

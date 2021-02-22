@@ -16,7 +16,7 @@ type PlatformData struct {
 }
 
 func GetPlatformUserData(start uint, end uint) []*PlatformData {
-	if start < end {
+	if start > end {
 		start, end = end, start
 	}
 	sUrl := fmt.Sprintf("http://app_fish.dev.com/platform/genRegisteredGameRobot?start=%d&end=%d&vaild=1",start,end)
@@ -28,13 +28,13 @@ func GetPlatformUserData(start uint, end uint) []*PlatformData {
 	err = json.Unmarshal(body, &jv)
 	util.CheckError(err)
 
-	userList := make([]*PlatformData, end-start)
-	pd := new(PlatformData)
+	userList := make([]*PlatformData, 0, end-start)
 	ret := jv["ret"].(float64)
 	if 1 == uint32(ret) {
 		jvData := jv["data"].([]interface{})
 		for _, v := range jvData {
 			p := v.(map[string]interface{})
+			pd := new(PlatformData)
 			pd.PID = uint32(p["uid"].(float64))
 			pd.Nickname = p["nickname"].(string)
 			pd.LoginToken = p["loginkey"].(map[string]interface{})["783"].(string)

@@ -86,7 +86,7 @@ func (c *FClient)OnDisconnected()  {
 }
 
 func (c *FClient)ProcessProtocols(p *protocols.Protocol) bool {
-	fmt.Printf("cmd:0x%04x\n", p.Head.Cmd)
+	//fmt.Printf("cmd:0x%04x\n", p.Head.Cmd)
 	isCommon, isOK := c.ProcessCommonProtocols(p)
 	if isCommon {
 		return isOK
@@ -278,8 +278,13 @@ func (c *FClient) processFire(p *protocols.Protocol) bool {
 	s2cFire.Parse(p)
 	if 0 != s2cFire.Result {
 		fmt.Printf("client index=%d, pid=%d fire failed, result=%d \n", c.Index, c.PtData.PID, s2cFire.Result)
+		return true
 	}
-	fmt.Printf("client index=%d, pid=%d fire successfully\n", c.Index, c.PtData.PID)
+	if s2cFire.CharID != c.charID {
+		// 别人的子弹不管
+		return true
+	}
+	//fmt.Printf("client index=%d, pid=%d fire successfully\n", c.Index, c.PtData.PID)
 	// 更新游戏币
 	c.gameCurrency = s2cFire.Currency
 	// 获取一条鱼
