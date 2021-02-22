@@ -15,10 +15,8 @@ type PlatformData struct {
 	ServerAddr string
 }
 
-func GetPlatformUserData(start uint, end uint) []*PlatformData {
-	if start > end {
-		start, end = end, start
-	}
+func GetPlatformUserData(start uint, num uint) []*PlatformData {
+	end := start + num - 1	// 如果相等，则取当前
 	sUrl := fmt.Sprintf("http://app_fish.dev.com/platform/genRegisteredGameRobot?start=%d&end=%d&vaild=1",start,end)
 	resp, err := http.Get(sUrl)
 	util.CheckError(err)

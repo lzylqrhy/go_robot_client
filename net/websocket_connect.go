@@ -22,7 +22,7 @@ type WSDialer struct {
 	ctx context.Context
 }
 
-func NewConnect(sAddr string) MyDialer {
+func NewWSConnect(sAddr string) MyDialer {
 	d := new(WSDialer)
 	u := url.URL{Scheme: "ws", Host: sAddr}
 	d.sAddr = u.String()

@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"github/go-robot/common"
-	"github/go-robot/games/fish"
+	"github/go-robot/games"
 	myNet "github/go-robot/net"
+	"github/go-robot/util"
+	"gopkg.in/ini.v1"
 	"log"
 	"math/rand"
 	//_ "net/http/pprof"
@@ -18,26 +20,28 @@ import (
 func main() {
 	rand.Seed(time.Now().Unix())
 	// 读取配置
-	// serverAddr := "192.168.0.194:7710"
-	//serverAddr := "127.0.0.1:8080" //"192.168.0.194:7712"
-	serverAddr := "192.168.0.194:7712"
+	conf, err := ini.Load("./configs/main.ini")
+	util.CheckError(err)
+	netProtocol := conf.Section("server").Key("protocol").String()
+	serverAddr := conf.Section("server").Key("server_addr").String()
 	// 机器人数量
-	userStart := uint(2)
-	userEnd := uint(5)
+	userStart, err := conf.Section("robot").Key("start").Uint()
+	util.CheckError(err)
+	num, err := conf.Section("robot").Key("num").Uint()
+	util.CheckError(err)
+	gameID, err := conf.Section("robot").Key("game_id").Uint()
+	util.CheckError(err)
+
 	// 从平台获取信息
-	userList := common.GetPlatformUserData(userStart, userEnd)
+	userList := common.GetPlatformUserData(userStart, num)
 	var wg sync.WaitGroup
 	ctx, cancel := context.WithCancel(context.Background())
-	for i, user := range userList {
-		//wg.Add(1)
-		//subCtx := context.WithValue(ctx, "index", i)
-		//go myNet.TcpConnect(subCtx, &wg, serverAddr, user)
-		//go myNet.WSConnect(subCtx, &wg, serverAddr, user)
 
+	for i, user := range userList {
 		// 连接服务器
-		d := myNet.NewConnect(serverAddr)
+		d := myNet.NewConnect(netProtocol, serverAddr)
 		// 创建客户端
-		c := fish.NewClient(uint32(i), user, d)
+		c := games.NewClient(gameID, uint(i), user, d)
 		// 开工
 		common.DoWork(ctx, &wg, c, d)
 	}

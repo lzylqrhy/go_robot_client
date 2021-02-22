@@ -24,9 +24,9 @@ type FClient struct {
 	bulletCache       []bullet // 子弹缓存
 }
 
-func NewClient(index uint32, pd *common.PlatformData, dialer myNet.MyDialer) common.Client {
+func NewClient(index uint, pd *common.PlatformData, dialer myNet.MyDialer) common.Client {
 	c := new(FClient)
-	c.Index = index
+	c.Index = uint32(index)
 	c.PtData = pd
 	c.Dialer = dialer
 	c.pond.Init()
@@ -83,6 +83,7 @@ func (c *FClient)OnConnected()  {
 
 func (c *FClient)OnDisconnected()  {
 	log.Printf("client index=%d disconnected\n", c.Index)
+	c.isWork = false
 }
 
 func (c *FClient)ProcessProtocols(p *protocols.Protocol) bool {
