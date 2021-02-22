@@ -46,12 +46,12 @@ package net
 //		for {
 //			select {
 //			case <-myRootCtx.Done():
-//				fmt.Printf("conn %d eixt\n", index)
+//				log.Printf("conn %d eixt\n", index)
 //				return
 //			default:
 //				data, err := readBuff(conn)
 //				if err != nil {
-//					fmt.Printf("Read protocol failed, index: %v, err: %v\n", index, err)
+//					log.Printf("Read protocol failed, index: %v, err: %v\n", index, err)
 //					myCancel()
 //				}
 //				chRead <- data
@@ -62,13 +62,13 @@ package net
 //	for {
 //		select {
 //		case <-myRootCtx.Done():
-//			fmt.Printf("conn %d eixt\n", index)
+//			log.Printf("conn %d eixt\n", index)
 //			return
 //		case pbBuff := <-chWrite:
 //			if len(pbBuff) >= protocols.HeadSize {
 //				_, err = conn.Write(pbBuff)
 //				if err != nil {
-//					fmt.Println("write failed, err:", err)
+//					log.Println("write failed, err:", err)
 //					return
 //				}
 //			}else {
@@ -91,20 +91,20 @@ package net
 //func readBuff(conn net.Conn) (*protocols.Protocol, error) {
 //	buff := make([]byte, protocols.HeadSize)
 //	if _, err := io.ReadFull(conn, buff); err != nil {
-//		fmt.Println("read protocol header failed, error is ", err)
+//		log.Println("read protocol header failed, error is ", err)
 //		return nil, err
 //	}
 //	ptData := new(protocols.Protocol)
 //	r := bytes.NewReader(buff)
 //	err := binary.Read(r, binary.LittleEndian, &ptData.Head)
 //	if err != nil {
-//		fmt.Println("binary.read failed, error is ", err)
+//		log.Println("binary.read failed, error is ", err)
 //		return nil, err
 //	}
 //	if ptData.Head.Len > protocols.HeadSize {
 //		leftBuff := make([]byte, ptData.Head.Len - protocols.HeadSize)
 //		if _, err := io.ReadFull(conn, leftBuff); err != nil {
-//			fmt.Println("read protocol content failed, error is ", err)
+//			log.Println("read protocol content failed, error is ", err)
 //			return nil, err
 //		}
 //		//const mark uint16 = 0x8000
@@ -123,7 +123,7 @@ package net
 //	defer wg.Done()
 //	c, bOk := ctx.Value("player").(common.Client)
 //	if !bOk {
-//		fmt.Println("type of context's value is not a client pointer")
+//		log.Println("type of context's value is not a client pointer")
 //		return
 //	}
 //	// 连接成功事件

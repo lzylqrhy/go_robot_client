@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github/go-robot/common"
 	"github/go-robot/games/fish"
 	myNet "github/go-robot/net"
+	"log"
 	"math/rand"
 	//_ "net/http/pprof"
 	"os"
@@ -45,9 +45,9 @@ func main() {
 	// 监听信号
 	waitForASignal()
 	cancel()
-	fmt.Println("stop all jobs")
+	log.Println("stop all jobs")
 	wg.Wait()
-	fmt.Println("exit")
+	log.Println("exit")
 }
 
 func waitForASignal()  {

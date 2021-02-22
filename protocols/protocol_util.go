@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	"fmt"
+	"log"
 	"math"
 )
 
@@ -32,7 +32,7 @@ func (p *Protocol)Bytes() []byte {
 	p.Head.Len = uint16(p.Content.Len() + HeadSize)
 	buff := new(bytes.Buffer)
 	if err := binary.Write(buff, binary.LittleEndian, &p.Head); err != nil {
-		fmt.Println("append number failed, err: ", err)
+		log.Println("append number failed, err: ", err)
 	}
 	buff.Write(p.Content.Bytes())
 	return buff.Bytes()
@@ -40,7 +40,7 @@ func (p *Protocol)Bytes() []byte {
 
 func (p *Protocol)AppendNumber(value interface{}) {
 	if err := binary.Write(&p.Content, binary.LittleEndian, value); err != nil {
-		fmt.Println("append number failed, err: ", err)
+		log.Println("append number failed, err: ", err)
 	}
 }
 

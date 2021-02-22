@@ -2,9 +2,9 @@ package common
 
 import (
 	"context"
-	"fmt"
 	myNet "github/go-robot/net"
 	"github/go-robot/protocols"
+	"log"
 	"strings"
 	"sync"
 	"time"
@@ -45,7 +45,7 @@ func (c *ClientBase)ProcessCommonProtocols(p *protocols.Protocol) (bool, bool) {
 func (c *ClientBase) processSyncTime(p *protocols.Protocol) bool {
 	s2cSync := new(protocols.S2CSyncTime)
 	s2cSync.Parse(p)
-	fmt.Println(s2cSync)
+	log.Println(s2cSync)
 	// 请求登录
 	var s2cLogin protocols.C2SLogin
 	s2cLogin.IsChildGame = false
@@ -53,7 +53,7 @@ func (c *ClientBase) processSyncTime(p *protocols.Protocol) bool {
 	strBuilder.WriteString(c.PtData.LoginToken)
 	strBuilder.WriteString(":0x20:1")
 	s2cLogin.Token = strBuilder.String()
-	fmt.Println("session:", s2cLogin.Token)
+	log.Println("session:", s2cLogin.Token)
 	c.SendPacket(s2cLogin.Bytes())
 	return true
 }

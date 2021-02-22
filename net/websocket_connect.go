@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
-	"fmt"
 	"github.com/gorilla/websocket"
 	"github/go-robot/protocols"
 	"io"
@@ -97,7 +96,7 @@ func (d *WSDialer) Run(ctx context.Context, wg *sync.WaitGroup) bool {
 			defer d.close()
 			d.read()
 			// 断开连接
-			fmt.Println("send on disconnected message")
+			log.Println("send on disconnected message")
 			var pd protocols.Protocol
 			pd.Head.Cmd = 0
 			pd.Head.Len = 1
@@ -108,7 +107,7 @@ func (d *WSDialer) Run(ctx context.Context, wg *sync.WaitGroup) bool {
 			select {
 			case <-ctx.Done():
 				d.Disconnect()
-				fmt.Println("conn exit")
+				log.Println("conn exit")
 				return
 			case data := <-d.chWrite:
 				if data == nil {
@@ -121,7 +120,7 @@ func (d *WSDialer) Run(ctx context.Context, wg *sync.WaitGroup) bool {
 				 */
 				err := d.conn.WriteMessage(websocket.BinaryMessage, data)
 				if err != nil {
-					fmt.Println("write failed, err:", err)
+					log.Println("write failed, err:", err)
 					return
 				}
 			}
@@ -138,7 +137,7 @@ func (d *WSDialer) read() {
 	for {
 		_, message, err := d.conn.ReadMessage()
 		if err != nil {
-			fmt.Println("read failed, err:", err)
+			log.Println("read failed, err:", err)
 			break
 		}
 		/* string传输方式
@@ -162,7 +161,7 @@ func (d *WSDialer) read() {
 				if br.Len() + int(leftCount) < protocols.HeadSize {
 					n, err := br.Read(headBuff[leftCount:])
 					if err != nil {
-						fmt.Println("read head buff failed, error is ", err)
+						log.Println("read head buff failed, error is ", err)
 						return
 					}
 					headBuff = headBuff[:leftCount+uint16(n)]
@@ -172,7 +171,7 @@ func (d *WSDialer) read() {
 				ptData = new(protocols.Protocol)
 				err = binary.Read(br, binary.LittleEndian, &ptData.Head)
 				if err != nil {
-					fmt.Println("binary.read failed, error is ", err)
+					log.Println("binary.read failed, error is ", err)
 					return
 				}
 				if ptData.Head.Len > protocols.HeadSize {
@@ -187,7 +186,7 @@ func (d *WSDialer) read() {
 							ptData.Content.Write(leftBuff)
 							break
 						}else {
-							fmt.Println("read protocol content failed, error is ", err)
+							log.Println("read protocol content failed, error is ", err)
 							return
 						}
 					}
@@ -201,7 +200,7 @@ func (d *WSDialer) read() {
 					leftBuff := make([]byte, br.Len())
 					n, err := br.Read(leftBuff)
 					if err != nil {
-						fmt.Println("read head buff failed, error is ", err)
+						log.Println("read head buff failed, error is ", err)
 						return
 					}
 					leftCount -= uint16(n)
@@ -209,7 +208,7 @@ func (d *WSDialer) read() {
 				}
 				leftBuff := make([]byte, leftCount)
 				if _, err := io.ReadFull(br, leftBuff); err != nil {
-					fmt.Println("read protocol content failed, error is ", err)
+					log.Println("read protocol content failed, error is ", err)
 				}
 				ptData.Content.Write(leftBuff)
 				d.chRead <- ptData

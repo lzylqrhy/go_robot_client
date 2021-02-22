@@ -3,9 +3,9 @@ package fish
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github/go-robot/util"
 	"io/ioutil"
+	"log"
 	"os"
 )
 
@@ -22,7 +22,7 @@ type ConfigManager struct {
 
 func (mgr *ConfigManager) Load() {
 	mgr.loadPathConfig()
-	fmt.Println("fish's configs are loaded")
+	log.Println("fish's configs are loaded")
 }
 
 func (mgr *ConfigManager) readFile(path string) []byte {

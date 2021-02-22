@@ -1,10 +1,10 @@
 package fish
 
 import (
-	"fmt"
 	"github/go-robot/common"
 	myNet "github/go-robot/net"
 	"github/go-robot/protocols"
+	"log"
 	"math/rand"
 	"time"
 )
@@ -30,8 +30,8 @@ func NewClient(index uint32, pd *common.PlatformData, dialer myNet.MyDialer) com
 	c.PtData = pd
 	c.Dialer = dialer
 	c.pond.Init()
-	fmt.Printf("new client: %v \n", c)
-	fmt.Printf("new client: %v \n", *c.PtData)
+	log.Printf("new client: %v \n", c)
+	log.Printf("new client: %v \n", *c.PtData)
 	return c
 }
 
@@ -44,7 +44,7 @@ func (c *FClient) getServerTime() uint64 {
 }
 
 func (c *FClient)Update() {
-	//fmt.Printf("client serial=%d update\n", c.serial)
+	//log.Printf("client serial=%d update\n", c.serial)
 	if !c.isWork {
 		return
 	}
@@ -78,15 +78,15 @@ func (c *FClient) cleanBulletCache() {
 func (c *FClient)OnConnected()  {
 	var ping protocols.C2SSyncTime
 	c.SendPacket(ping.Bytes())
-	fmt.Printf("client index=%d connected\n", c.Index)
+	log.Printf("client index=%d connected\n", c.Index)
 }
 
 func (c *FClient)OnDisconnected()  {
-	fmt.Printf("client index=%d disconnected\n", c.Index)
+	log.Printf("client index=%d disconnected\n", c.Index)
 }
 
 func (c *FClient)ProcessProtocols(p *protocols.Protocol) bool {
-	//fmt.Printf("cmd:0x%04x\n", p.Head.Cmd)
+	//log.Printf("cmd:0x%04x\n", p.Head.Cmd)
 	isCommon, isOK := c.ProcessCommonProtocols(p)
 	if isCommon {
 		return isOK
@@ -123,7 +123,7 @@ func (c *FClient) processLogin(p *protocols.Protocol) bool {
 	s2cLogin.Parse(p)
 	if s2cLogin.Status == 1 {
 		// 登录成功
-		fmt.Printf("client index=%d, pid=%d login successfully\n", c.Index, c.PtData.PID)
+		log.Printf("client index=%d, pid=%d login successfully\n", c.Index, c.PtData.PID)
 		// 发送资源加载完成
 		var c2sLoaded protocols.C2SResourceLoaded
 		c.SendPacket(c2sLoaded.Bytes())
@@ -133,14 +133,14 @@ func (c *FClient) processLogin(p *protocols.Protocol) bool {
 		c.SendPacket(c2sEnterRoom.Bytes())
 		return true
 	}
-	fmt.Printf("client index=%d, pid=%d login failed, status: %d\n", c.Index, c.PtData.PID, s2cLogin.Status)
+	log.Printf("client index=%d, pid=%d login failed, status: %d\n", c.Index, c.PtData.PID, s2cLogin.Status)
 	return false
 }
 
 func (c *FClient) processPlayerInfo(p *protocols.Protocol) bool {
 	var s2cPlayer protocols.S2CPlayerInfo
 	s2cPlayer.Parse(p)
-	fmt.Printf("client index=%d, pid=%d get player info successfully, player=%v\n", c.Index, c.PtData.PID, s2cPlayer)
+	log.Printf("client index=%d, pid=%d get player info successfully, player=%v\n", c.Index, c.PtData.PID, s2cPlayer)
 	c.charID = s2cPlayer.CharID
 	return true
 }
@@ -150,11 +150,11 @@ func (c *FClient) processEnterRoom(p *protocols.Protocol) bool {
 	s2cEnterRoom.Parse(p)
 	if s2cEnterRoom.Result != 0 {
 		// 进入失败
-		fmt.Printf("client index=%d, pid=%d enter room=%d failed, result: %d\n",
+		log.Printf("client index=%d, pid=%d enter room=%d failed, result: %d\n",
 			c.Index, c.PtData.PID, s2cEnterRoom.RoomID, s2cEnterRoom.Result)
 		return false
 	}
-	fmt.Printf("client index=%d, pid=%d enter room=%d successfully\n", c.Index, c.PtData.PID, s2cEnterRoom.RoomID)
+	log.Printf("client index=%d, pid=%d enter room=%d successfully\n", c.Index, c.PtData.PID, s2cEnterRoom.RoomID)
 	// 请求场景信息
 	var c2sSceneInfo protocols.C2SGetSceneInfo
 	c.SendPacket(c2sSceneInfo.Bytes())
@@ -168,7 +168,7 @@ func (c *FClient) processEnterRoom(p *protocols.Protocol) bool {
 func (c *FClient) processSceneInfo(p *protocols.Protocol) bool {
 	var s2cSceneInfo protocols.S2CGetSceneInfo
 	s2cSceneInfo.Parse(p)
-	fmt.Printf("client index=%d, pid=%d get scene info successfully\n", c.Index, c.PtData.PID)
+	log.Printf("client index=%d, pid=%d get scene info successfully\n", c.Index, c.PtData.PID)
 	c.SevTime = uint64(s2cSceneInfo.ServerTime)
 	c.LocalTime = uint64(time.Now().UnixNano() / 1e6)
 	return true
@@ -177,7 +177,7 @@ func (c *FClient) processSceneInfo(p *protocols.Protocol) bool {
 func (c *FClient) processSeatsInfo(p *protocols.Protocol) bool {
 	var s2cSeats protocols.S2CSeatsInfo
 	s2cSeats.Parse(p)
-	fmt.Printf("client index=%d, pid=%d get seat list successfully\n", c.Index, c.PtData.PID)
+	log.Printf("client index=%d, pid=%d get seat list successfully\n", c.Index, c.PtData.PID)
 	for _, p := range s2cSeats.Players {
 		if p.CharID == c.charID {
 			c.seatID = p.SeatID
@@ -204,7 +204,7 @@ func (c *FClient) processSeatsInfo(p *protocols.Protocol) bool {
 func (c *FClient) processFishList(p *protocols.Protocol) bool {
 	var s2cFish protocols.S2CFishList
 	s2cFish.Parse(p)
-	fmt.Printf("client index=%d, pid=%d get fish list successfully\n", c.Index, c.PtData.PID)
+	log.Printf("client index=%d, pid=%d get fish list successfully\n", c.Index, c.PtData.PID)
 	for _, f := range s2cFish.FishList {
 		c.pond.mapFish[f.Serial] = fish{
 			Serial: f.Serial,
@@ -224,7 +224,7 @@ func (c *FClient) processFishList(p *protocols.Protocol) bool {
 func (c *FClient) processBulletList(p *protocols.Protocol) bool {
 	var s2cBullet protocols.S2CBulletList
 	s2cBullet.Parse(p)
-	fmt.Printf("client index=%d, pid=%d get bullet list successfully\n", c.Index, c.PtData.PID)
+	log.Printf("client index=%d, pid=%d get bullet list successfully\n", c.Index, c.PtData.PID)
 	for _, b := range s2cBullet.BulletList {
 		if b.CharID == c.charID {
 			// 添加到子弹列表中
@@ -256,7 +256,7 @@ func (c *FClient) processBulletList(p *protocols.Protocol) bool {
 func (c *FClient) fire() {
 	// 判断钱是否足够
 	if c.gameCurrency < uint64(c.caliber) {
-		fmt.Printf("client %d has no enough coin, need=%d, cur=%d, will exit \n", c.charID, c.caliber, c.gameCurrency)
+		log.Printf("client %d has no enough coin, need=%d, cur=%d, will exit \n", c.charID, c.caliber, c.gameCurrency)
 		c.Dialer.Disconnect()
 		c.isWork = false
 		return
@@ -277,14 +277,14 @@ func (c *FClient) processFire(p *protocols.Protocol) bool {
 	var s2cFire protocols.S2CFire
 	s2cFire.Parse(p)
 	if 0 != s2cFire.Result {
-		fmt.Printf("client index=%d, pid=%d fire failed, result=%d \n", c.Index, c.PtData.PID, s2cFire.Result)
+		log.Printf("client index=%d, pid=%d fire failed, result=%d \n", c.Index, c.PtData.PID, s2cFire.Result)
 		return true
 	}
 	if s2cFire.CharID != c.charID {
 		// 别人的子弹不管
 		return true
 	}
-	//fmt.Printf("client index=%d, pid=%d fire successfully\n", c.Index, c.PtData.PID)
+	//log.Printf("client index=%d, pid=%d fire successfully\n", c.Index, c.PtData.PID)
 	// 更新游戏币
 	c.gameCurrency = s2cFire.Currency
 	// 获取一条鱼
@@ -333,7 +333,7 @@ func (c *FClient) processHitFish(p *protocols.Protocol) bool {
 	for _, f := range s2cHit.DeadFish {
 		if f.IsDead > 0 {
 			delete(c.pond.mapFish, f.Serial)
-			fmt.Printf("client index=%d, pid=%d captured fish\n", c.Index, c.PtData.PID)
+			log.Printf("client index=%d, pid=%d captured fish\n", c.Index, c.PtData.PID)
 		}
 	}
 	if s2cHit.CharID == c.charID {

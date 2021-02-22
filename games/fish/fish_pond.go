@@ -67,5 +67,5 @@ func (mgr *fishManager) Update(t uint64) {
 			delete(*mgr, k)
 		}
 	}
-	//fmt.Println("pond fish num = ", len(*mgr))
+	//log.Println("pond fish num = ", len(*mgr))
 }
