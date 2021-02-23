@@ -8,12 +8,12 @@ import (
 )
 
 const (
-	fishGame = 1 + iota
+	FishGame = 1 + iota
 )
 
 func NewClient(gameID uint, index uint, pd *common.PlatformData, dialer myNet.MyDialer) common.Client {
 	switch gameID {
-	case fishGame:
+	case FishGame:
 		return fish.NewClient(index, pd, dialer)
 	}
 	log.Panic("game id is not undefined")

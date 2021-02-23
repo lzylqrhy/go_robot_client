@@ -4,6 +4,8 @@ import "github/go-robot/util"
 
 const (
 	PlayerCode = 0x101	// 玩家个人信息
+	EnterHallOrRoomCode = 0x103	// 登录成功后进入大厅或房间
+	RoomListCode = 0x300	// 房间列表
 	EnterRoomCode = 0x301	// 进入房间
 	SceneInfoCode = 0x305	// 请求场景信息
 	PlayerSeatCode = 0x306	// 鱼池座位列表信息
@@ -35,6 +37,47 @@ func (p *S2CPlayerInfo) Parse(pb *Protocol) {
 	util.CheckError(pb.GetNumber(&p.LV))
 	util.CheckError(pb.GetNumber(&p.Exp))
 	util.CheckError(pb.GetNumber(&p.UpgradeExp))
+}
+
+type S2CEnterHallOrRoom struct {
+	RoomID uint32
+}
+
+func (p *S2CEnterHallOrRoom) Parse(pb *Protocol) {
+	err := pb.GetNumber(p)
+	util.CheckError(err)
+}
+
+type Room struct {
+	RoomID uint32
+	Type uint8
+	Status uint8
+	CostType uint32
+	MinScore uint32
+	MaxScore uint32
+	MinCannon uint32
+	MaxCannon uint32
+}
+
+type S2CRoomList struct {
+	Rooms []Room
+}
+
+func (p *S2CRoomList) Parse(pb *Protocol) {
+	var count uint8
+	util.CheckError(pb.GetNumber(&count))
+	p.Rooms = make([]Room, count)
+	for i := 0; i < int(count); i++ {
+		room := &p.Rooms[i]
+		util.CheckError(pb.GetNumber(&room.RoomID))
+		util.CheckError(pb.GetNumber(&room.Type))
+		util.CheckError(pb.GetNumber(&room.Status))
+		util.CheckError(pb.GetNumber(&room.CostType))
+		util.CheckError(pb.GetNumber(&room.MinScore))
+		util.CheckError(pb.GetNumber(&room.MaxScore))
+		util.CheckError(pb.GetNumber(&room.MinCannon))
+		util.CheckError(pb.GetNumber(&room.MaxCannon))
+	}
 }
 
 type C2SEnterRoom struct {

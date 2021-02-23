@@ -38,6 +38,7 @@ func (d *WSDialer) connect() bool {
 		log.Fatal("web socket dial failed, err:", err)
 		return false
 	}
+	log.Printf("web socket dial %s successfully", d.sAddr)
 	return true
 }
 

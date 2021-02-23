@@ -1,2 +1,2 @@
 go build -o bin/robots.exe ./
-cp -r configs bin/
+xcopy configs bin\configs /s /y

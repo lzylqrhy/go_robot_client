@@ -2,6 +2,7 @@ package fish
 
 import (
 	"github/go-robot/common"
+	"github/go-robot/global"
 	myNet "github/go-robot/net"
 	"github/go-robot/protocols"
 	"log"
@@ -22,6 +23,7 @@ type FClient struct {
 	isWork            bool     // 是否工作
 	originSerial      uint32   // 子弹最新本地序号
 	bulletCache       []bullet // 子弹缓存
+	rooms			  []protocols.Room // 房间列表
 }
 
 func NewClient(index uint, pd *common.PlatformData, dialer myNet.MyDialer) common.Client {
@@ -95,6 +97,10 @@ func (c *FClient)ProcessProtocols(p *protocols.Protocol) bool {
 	switch p.Head.Cmd {
 	case protocols.S2CLoginCode:
 		return c.processLogin(p)
+	case protocols.EnterHallOrRoomCode:
+		return c.processEnterHallOrRoom(p)
+	case protocols.RoomListCode:
+		return c.processRoomList(p)
 	case protocols.PlayerCode:
 		return c.processPlayerInfo(p)
 	case protocols.EnterRoomCode:
@@ -116,6 +122,7 @@ func (c *FClient)ProcessProtocols(p *protocols.Protocol) bool {
 	case protocols.GenerateFish:
 		return c.processGenerateFish(p)
 	}
+	log.Printf("cmd:0x%04x don't process\n", p.Head.Cmd)
 	return true
 }
 
@@ -128,10 +135,10 @@ func (c *FClient) processLogin(p *protocols.Protocol) bool {
 		// 发送资源加载完成
 		var c2sLoaded protocols.C2SResourceLoaded
 		c.SendPacket(c2sLoaded.Bytes())
-		// 进入房间
-		var c2sEnterRoom protocols.C2SEnterRoom
-		c2sEnterRoom.RoomID = 20001
-		c.SendPacket(c2sEnterRoom.Bytes())
+		//// 进入房间
+		//var c2sEnterRoom protocols.C2SEnterRoom
+		//c2sEnterRoom.RoomID = 20001
+		//c.SendPacket(c2sEnterRoom.Bytes())
 		return true
 	}
 	log.Printf("client index=%d, pid=%d login failed, status: %d\n", c.Index, c.PtData.PID, s2cLogin.Status)
@@ -143,6 +150,48 @@ func (c *FClient) processPlayerInfo(p *protocols.Protocol) bool {
 	s2cPlayer.Parse(p)
 	log.Printf("client index=%d, pid=%d get player info successfully, player=%v\n", c.Index, c.PtData.PID, s2cPlayer)
 	c.charID = s2cPlayer.CharID
+	return true
+}
+
+func (c *FClient) processEnterHallOrRoom(p *protocols.Protocol) bool {
+	var s2cGo protocols.S2CEnterHallOrRoom
+	s2cGo.Parse(p)
+	// 如果有房间ID，则说明是断线重连，进入对应房间
+	var roomID uint32
+	if s2cGo.RoomID > 0 {
+		roomID = s2cGo.RoomID
+	}else {
+		// 是否有指定房间
+		if global.FishSetting.RoomID > 0 {
+			roomID = uint32(global.FishSetting.RoomID)
+		}else {
+			// 找到可进入的房间
+			validRoom := make([]uint32, 0, 3)
+			for _, r := range c.rooms {
+				// 目前此处缺少个人炮倍及游戏币数据
+				//if c.gameCurrency < uint64(r.MinScore) ||
+				//	r.MaxScore > 0 && c.gameCurrency > uint64(r.MaxScore) || c.caliber < r.MinScore{
+				//	continue
+				//}
+				validRoom = append(validRoom, r.RoomID)
+			}
+			index := rand.Int31n(int32(len(validRoom)))
+			roomID = validRoom[index]
+		}
+	}
+	// 进入房间
+	var c2sEnterRoom protocols.C2SEnterRoom
+	c2sEnterRoom.RoomID = roomID
+	c.SendPacket(c2sEnterRoom.Bytes())
+	log.Printf("client index=%d, pid=%d player enter room %d\n", c.Index, c.PtData.PID, roomID)
+	return true
+}
+
+func (c *FClient) processRoomList(p *protocols.Protocol) bool {
+	var s2cRooms protocols.S2CRoomList
+	s2cRooms.Parse(p)
+	c.rooms = s2cRooms.Rooms
+	log.Printf("client index=%d, pid=%d get room list:%v\n", c.Index, c.PtData.PID, c.rooms)
 	return true
 }
 
@@ -159,10 +208,6 @@ func (c *FClient) processEnterRoom(p *protocols.Protocol) bool {
 	// 请求场景信息
 	var c2sSceneInfo protocols.C2SGetSceneInfo
 	c.SendPacket(c2sSceneInfo.Bytes())
-	//// 转发
-	//var c2sTransmit protocols.C2STransmitActivity
-	//c2sTransmit.Activity = "hello"
-	//c.sendPacket(c2sTransmit.Bytes())
 	return true
 }
 
