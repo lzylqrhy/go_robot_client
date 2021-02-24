@@ -6,6 +6,7 @@ import (
 	myNet "github/go-robot/net"
 	"github/go-robot/protocols"
 	"log"
+	"math"
 	"math/rand"
 	"time"
 )
@@ -122,7 +123,7 @@ func (c *FClient)ProcessProtocols(p *protocols.Protocol) bool {
 	case protocols.GenerateFish:
 		return c.processGenerateFish(p)
 	}
-	log.Printf("cmd:0x%04x don't process\n", p.Head.Cmd)
+	//log.Printf("cmd:0x%04x don't process\n", p.Head.Cmd)
 	return true
 }
 
@@ -315,7 +316,10 @@ func (c *FClient) fire() {
 	c.originSerial++
 	c2sFire := protocols.C2SFire{}
 	c2sFire.OriginID = c.originSerial
-	c2sFire.Radian = 0.8
+	c2sFire.Radian = float32(rand.Int31n(120) + 30) / 180 * math.Pi
+	if c.seatID < 2 {
+		c2sFire.Radian *= -1
+	}
 	c.SendPacket(c2sFire.Bytes())
 }
 
@@ -379,11 +383,11 @@ func (c *FClient) processHitFish(p *protocols.Protocol) bool {
 	for _, f := range s2cHit.DeadFish {
 		if f.IsDead > 0 {
 			delete(c.pond.mapFish, f.Serial)
-			log.Printf("client index=%d, pid=%d captured fish\n", c.Index, c.PtData.PID)
+			//log.Printf("client index=%d, pid=%d captured fish\n", c.Index, c.PtData.PID)
 		}
 	}
 	if s2cHit.CharID == c.charID {
-		c.gameCurrency = s2cHit.Currency
+		c.gameCurrency = uint64(s2cHit.Currency)
 	}
 	return true
 }

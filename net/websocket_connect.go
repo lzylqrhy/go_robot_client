@@ -47,6 +47,7 @@ func (d *WSDialer) Disconnect() {
 		err := d.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 		if err != nil {
 			log.Println("web socket disconnect failed, err:", err)
+			return
 		}
 		select {
 		case <-d.chRead:
@@ -68,7 +69,7 @@ func (d *WSDialer) close() {
 
 func (d *WSDialer) SendPacket(data []byte) bool {
 	if d.conn == nil {
-		log.Panicln("send failed, the dialer is offline")
+		log.Println("send failed, the dialer is offline")
 		return false
 	}
 	d.chWrite<- data

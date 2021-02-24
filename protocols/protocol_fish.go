@@ -297,7 +297,7 @@ type C2SHitFish struct {
 	BulletSerial uint32
 	OriginID uint32
 	FishSerial uint32
-	LocalTime uint64
+	LocalTime float64
 }
 
 func (p *C2SHitFish) Bytes() []byte {
@@ -325,9 +325,9 @@ type S2CHitFish struct {
 	OriginID   uint32
 	FishSerial uint32
 	Multiple   uint32
-	Currency   uint64
+	Currency   float64
 	DeadFish   []deadFish
-	ClientTime uint64
+	ClientTime float64
 }
 
 func (p *S2CHitFish) Parse(pb *Protocol) {
@@ -339,6 +339,7 @@ func (p *S2CHitFish) Parse(pb *Protocol) {
 	util.CheckError(pb.GetNumber(&p.Multiple))
 	util.CheckError(pb.GetNumber(&p.Currency))
 	var count, dropCount uint8
+	util.CheckError(pb.GetNumber(&count))
 	p.DeadFish = make([]deadFish, count)
 	for i := uint8(0); i < count; i++ {
 		tempFish := &p.DeadFish[i]
