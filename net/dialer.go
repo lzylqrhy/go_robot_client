@@ -16,12 +16,15 @@ type MyDialer interface {
 
 const (
 	WS = "ws"
+	TCP = "tcp"
 )
 
 func NewConnect(protocol, sAddr string) MyDialer {
 	switch protocol {
 	case WS:
 		return NewWSConnect(sAddr)
+	case TCP:
+		return NewTCPConnect(sAddr)
 	}
 	log.Panic("game id is not undefined")
 	return nil

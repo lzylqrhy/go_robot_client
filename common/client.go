@@ -102,6 +102,10 @@ func DoWork(ctx context.Context, wg *sync.WaitGroup, c Client, d myNet.MyDialer)
 									if d.Run(myCtx, wg) {
 										break Break
 									}
+									if 4 == i {
+										// 放弃重连，关闭
+										return
+									}
 								}
 							}
 						}

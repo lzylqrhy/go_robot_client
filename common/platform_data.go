@@ -11,10 +11,10 @@ import (
 )
 
 type PlatformData struct {
-	PID        uint32
-	Nickname   string
-	LoginToken string
-	ServerAddr string
+	PID          uint32
+	Nickname     string
+	LoginToken   string
+	WSServerAddr string
 }
 
 func GetPlatformUserData() []*PlatformData {
@@ -42,7 +42,7 @@ func GetPlatformUserData() []*PlatformData {
 			pd.PID = uint32(p["uid"].(float64))
 			pd.Nickname = p["nickname"].(string)
 			pd.LoginToken = p["loginkey"].(map[string]interface{})[cfg.GameZone].(string)
-			pd.ServerAddr = p["ws_host"].(map[string]interface{})[cfg.GameZone].(string)
+			pd.WSServerAddr = p["ws_host"].(map[string]interface{})[cfg.GameZone].(string)
 			userList = append(userList, pd)
 		}
 	} else {

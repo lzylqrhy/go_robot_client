@@ -40,7 +40,12 @@ func main() {
 			serverAddr = global.FishSetting.ServerAddr
 		}
 		if "" == serverAddr {
-			serverAddr = user.ServerAddr
+			if myNet.WS == cfg.NetProtocol {
+				serverAddr = user.WSServerAddr
+			} else {
+				log.Println("when protocol is not ws, must set server")
+				break
+			}
 		}
 		d := myNet.NewConnect(cfg.NetProtocol, serverAddr)
 		// 创建客户端
