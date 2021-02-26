@@ -17,6 +17,12 @@ import (
 )
 
 func main() {
+	f, err := os.OpenFile("run.log", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.SetOutput(f)
+	defer f.Close()
 	rand.Seed(time.Now().Unix())
 	// 读取配置
 	global.LoadSetting()
@@ -44,9 +50,11 @@ func main() {
 	}
 	//http.ListenAndServe("0.0.0.0:6060", nil)
 	// 监听信号
-	waitForASignal()
-	cancel()
-	log.Println("stop all jobs")
+	go func() {
+		waitForASignal()
+		cancel()
+		log.Println("stop all jobs")
+	}()
 	wg.Wait()
 	log.Println("exit")
 }

@@ -2,6 +2,7 @@ package common
 
 import (
 	"context"
+	"github/go-robot/global"
 	myNet "github/go-robot/net"
 	"github/go-robot/protocols"
 	"log"
@@ -71,12 +72,15 @@ func DoWork(ctx context.Context, wg *sync.WaitGroup, c Client, d myNet.MyDialer)
 			wg.Done()
 		}()
 		// 驱动网络连接
-		d.Run(myCtx, wg)
-		frameTick := time.NewTicker(time.Millisecond * 200)
+		if !d.Run(myCtx, wg) {
+			return
+		}
+		frameDuration := 1000 / global.GameCommonSetting.Frame
+		frameTick := time.NewTicker(time.Millisecond * time.Duration(frameDuration))
 		pingTick := time.NewTicker(time.Second * 10)
 		for {
 			select {
-			case <-ctx.Done(): // 模拟断线事件
+			case <-ctx.Done():
 				frameTick.Stop()
 				pingTick.Stop()
 				return
@@ -89,15 +93,27 @@ func DoWork(ctx context.Context, wg *sync.WaitGroup, c Client, d myNet.MyDialer)
 							c.OnConnected()
 						case 1: // 断开连接
 							c.OnDisconnected()
-							d.Run(myCtx, wg)
+							// 断线重连，5秒一次
+							Break:
+							for i := 0; i < 5; i++ {
+								select {
+								case <-time.After(5 * time.Second):
+									log.Println("client reconnect count i = ", i)
+									if d.Run(myCtx, wg) {
+										break Break
+									}
+								}
+							}
 						}
 						break
 					default:
 						if !c.ProcessProtocols(pd) {
-							d.Disconnect()
+							// 如果处理失败，主动断开连接
+							return
 						}
 					}
 				}else {
+					// 当前用户退出游戏
 					return
 				}
 			case <-frameTick.C: // 客户端定时器

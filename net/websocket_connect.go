@@ -12,7 +12,7 @@ import (
 	"sync"
 )
 
-const postfix = "\r\n\r\n"
+//const postfix = "\r\n\r\n"
 
 type WSDialer struct {
 	conn *websocket.Conn
@@ -32,10 +32,13 @@ func NewWSConnect(sAddr string) MyDialer {
 }
 
 func (d *WSDialer) connect() bool {
+	if d.conn != nil {
+		return true
+	}
 	var err error
 	d.conn, _, err = websocket.DefaultDialer.Dial(d.sAddr, nil)
 	if err != nil {
-		log.Fatal("web socket dial failed, err:", err)
+		log.Println("web socket dial failed, err:", err)
 		return false
 	}
 	log.Printf("web socket dial %s successfully", d.sAddr)
@@ -44,21 +47,27 @@ func (d *WSDialer) connect() bool {
 
 func (d *WSDialer) Disconnect() {
 	if d.conn != nil {
-		err := d.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-		if err != nil {
-			log.Println("web socket disconnect failed, err:", err)
-			return
+		// 单0表示关闭
+		d.SendPacket([]byte{0})
+		Break:
+		for {
+			select {
+			case pb := <-d.chRead:
+				if 0 == pb.Head.Cmd {
+					close(d.chWrite)
+					close(d.chRead)
+					break Break
+				}
+			}
 		}
-		select {
-		case <-d.chRead:
-			close(d.chWrite)
-			close(d.chRead)
-		}
+		log.Println("web socket disconnect successfully")
 	}
 }
 
 func (d *WSDialer) close() {
 	if d.conn != nil {
+		// 断开连接
+		log.Println("close web socket connect")
 		err := d.conn.Close()
 		if err != nil {
 			log.Println("web socket close socket failed, err:", err)
@@ -95,36 +104,54 @@ func (d *WSDialer) Run(ctx context.Context, wg *sync.WaitGroup) bool {
 		d.chRead <- &pd
 		// 读消息
 		go func() {
-			defer d.close()
+			defer func() {
+				d.close()
+				// 连接断开
+				var pd protocols.Protocol
+				pd.Head.Cmd = 0
+				pd.Head.Len = 1
+				d.chRead <- &pd
+				// 关闭发数据的loop，一定要使用
+				d.chWrite <- nil
+			}()
+			// 读消息
 			d.read()
-			// 断开连接
-			log.Println("send on disconnected message")
-			var pd protocols.Protocol
-			pd.Head.Cmd = 0
-			pd.Head.Len = 1
-			d.chRead <- &pd
 		}()
+		isDisconnect := false
 		// 发数据
 		for {
 			select {
 			case <-ctx.Done():
-				d.Disconnect()
-				log.Println("conn exit")
-				return
+				if !isDisconnect {
+					go d.Disconnect()
+					isDisconnect = true
+				}
 			case data := <-d.chWrite:
 				if data == nil {
 					return
+				}
+				if d.conn == nil {
+					break
+				}
+				if bytes.Equal(data, []byte{0}) {
+					err := d.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+					if err != nil {
+						log.Println("web socket soft close failed, err:", err)
+					}
+					break
 				}
 				/* string传输方式
 				enMessage := base64.StdEncoding.EncodeToString(data)
 				enMessage += postfix
 				err := d.conn.WriteMessage(websocket.TextMessage, []byte(enMessage))
 				 */
+				//log.Println("write msg:", data[:4], "\n", string(debug.Stack()))
 				err := d.conn.WriteMessage(websocket.BinaryMessage, data)
 				if err != nil {
 					log.Println("write failed, err:", err)
 					return
 				}
+				//log.Println("write msg ok :", data[:4])
 			}
 		}
 	}()

@@ -6,6 +6,7 @@ import (
 	"github/go-robot/global"
 	"github/go-robot/util"
 	"io/ioutil"
+	"log"
 	"net/http"
 )
 
@@ -21,8 +22,8 @@ func GetPlatformUserData() []*PlatformData {
 	if 0 == cfg.RobotNum {
 		return nil
 	}
-	sUrl := fmt.Sprintf("http://app_fish.dev.com/platform/genRegisteredGameRobot?start=%d&end=%d&vaild=1",
-		cfg.RobotStart, cfg.RobotStart + cfg.RobotNum - 1)
+	sUrl := fmt.Sprintf("%s?start=%d&end=%d&vaild=1",
+		cfg.RobotAddr, cfg.RobotStart, cfg.RobotStart + cfg.RobotNum - 1)
 	resp, err := http.Get(sUrl)
 	util.CheckError(err)
 	body, err := ioutil.ReadAll(resp.Body)
@@ -44,6 +45,8 @@ func GetPlatformUserData() []*PlatformData {
 			pd.ServerAddr = p["ws_host"].(map[string]interface{})[cfg.GameZone].(string)
 			userList = append(userList, pd)
 		}
+	} else {
+		log.Println("access url failed, data:", string(body))
 	}
 	return userList
 }

@@ -8,10 +8,15 @@ import (
 
 var MainSetting struct{
 	NetProtocol string
+	RobotAddr string
 	RobotStart  uint
 	RobotNum    uint
 	GameID      uint
 	GameZone	string
+}
+
+var GameCommonSetting struct{
+	Frame uint
 }
 
 var FishSetting struct {
@@ -29,12 +34,17 @@ func loadMainSetting() {
 	util.CheckError(err)
 	MainSetting.NetProtocol = conf.Section("server").Key("protocol").String()
 	if "" == MainSetting.NetProtocol {
-		panic("must set main.server.protocol")
+		log.Panicln("must set main.server.protocol")
 		return
 	}
-	// 机器人数量
+	// 机器人
 	robot := conf.Section("robot")
 	if robot != nil {
+		MainSetting.RobotAddr = robot.Key("api_addr").String()
+		if "" == MainSetting.RobotAddr {
+			log.Panicln("must set main.robot.api_addr")
+			return
+		}
 		MainSetting.RobotStart, err = robot.Key("start").Uint()
 		util.CheckError(err)
 		MainSetting.RobotNum, err = robot.Key("num").Uint()
@@ -43,11 +53,11 @@ func loadMainSetting() {
 		util.CheckError(err)
 		MainSetting.GameZone = robot.Key("game_zone").String()
 		if "" == MainSetting.GameZone {
-			panic("must set main.robot.game_zone")
+			log.Panicln("must set main.robot.game_zone")
 			return
 		}
 	} else {
-		panic("must set main.robot section")
+		log.Panicln("must set main.robot section")
 		return
 	}
 	log.Println("load ./configs/main.ini completed")
@@ -56,6 +66,12 @@ func loadMainSetting() {
 func loadGameSetting() {
 	conf, err := ini.Load("./configs/game.ini")
 	util.CheckError(err)
+	GameCommonSetting.Frame, err = conf.Section("common").Key("frame").Uint()
+	util.CheckError(err)
+	if 0 == GameCommonSetting.Frame {
+		log.Panicln("game.common.frame is > 0")
+	}
+
 	section := conf.Section("fish")
 	if section != nil {
 		FishSetting.ServerAddr = section.Key("server_addr").String()

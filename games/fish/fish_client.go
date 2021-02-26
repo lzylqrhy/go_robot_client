@@ -25,6 +25,7 @@ type FClient struct {
 	originSerial      uint32   // 子弹最新本地序号
 	bulletCache       []bullet // 子弹缓存
 	rooms			  []protocols.Room // 房间列表
+	fireTime,hitTime  map[uint32]int64
 }
 
 func NewClient(index uint, pd *common.PlatformData, dialer myNet.MyDialer) common.Client {
@@ -33,6 +34,9 @@ func NewClient(index uint, pd *common.PlatformData, dialer myNet.MyDialer) commo
 	c.PtData = pd
 	c.Dialer = dialer
 	c.pond.Init()
+	c.bulletCache = make([]bullet, 0, 20)
+	c.fireTime = make(map[uint32]int64)
+	c.hitTime = make(map[uint32]int64)
 	log.Printf("new client: %v \n", c)
 	log.Printf("new client: %v \n", *c.PtData)
 	return c
@@ -73,6 +77,7 @@ func (c *FClient) cleanBulletCache() {
 				FishSerial: serial,
 			}
 			c.SendPacket(c2sHit.Bytes())
+			c.hitTime[b.Serial] = time.Now().UnixNano()
 		}
 	}
 	c.bulletCache = c.bulletCache[:0]
@@ -321,11 +326,21 @@ func (c *FClient) fire() {
 		c2sFire.Radian *= -1
 	}
 	c.SendPacket(c2sFire.Bytes())
+	c.fireTime[c2sFire.OriginID] = time.Now().UnixNano()
 }
 
 func (c *FClient) processFire(p *protocols.Protocol) bool {
 	var s2cFire protocols.S2CFire
 	s2cFire.Parse(p)
+	// 暂时只管自己的子弹
+	if s2cFire.CharID != c.charID {
+		return true
+	}
+	costTime := (time.Now().UnixNano() - c.fireTime[s2cFire.OriginID]) / 1e6
+	//if costTime > 50 {
+		log.Printf("-------------------------------client index=%d, pid=%d fire cost time %d\n", c.Index, c.PtData.PID, costTime)
+	//}
+	delete(c.fireTime, s2cFire.OriginID)
 	if 0 != s2cFire.Result {
 		log.Printf("client index=%d, pid=%d fire failed, result=%d \n", c.Index, c.PtData.PID, s2cFire.Result)
 		return true
@@ -347,6 +362,7 @@ func (c *FClient) processFire(p *protocols.Protocol) bool {
 			FishSerial: serial,
 		}
 		c.SendPacket(c2sHit.Bytes())
+		c.hitTime[s2cFire.Serial] = time.Now().UnixNano()
 	}else {
 		// 添加到子弹列表中
 		c.bulletCache = append(c.bulletCache, bullet{
@@ -363,18 +379,22 @@ func (c *FClient) processFire(p *protocols.Protocol) bool {
 }
 
 func (c *FClient) getOneFish() uint32 {
-	count := len(c.pond.mapFish)
+	if 0 == len(c.pond.mapFish) {
+		return 0
+	}
+	var count int
+	fishShow := make([]uint32, 0, 32) // 可绘制出来的鱼
+	for k, v := range c.pond.mapFish {
+		if v.BornTime <= float64(c.getServerTime()) {
+			fishShow = append(fishShow, k)
+			count++
+		}
+	}
 	if count == 0 {
 		return 0
 	}
-	index := rand.Int31n(int32(count)) + 1
-	for k := range c.pond.mapFish {
-		index--
-		if 0 == index {
-			return k
-		}
-	}
-	return 0
+	index := rand.Int31n(int32(count))
+	return fishShow[index]
 }
 
 func (c *FClient) processHitFish(p *protocols.Protocol) bool {
@@ -388,6 +408,10 @@ func (c *FClient) processHitFish(p *protocols.Protocol) bool {
 	}
 	if s2cHit.CharID == c.charID {
 		c.gameCurrency = uint64(s2cHit.Currency)
+		costTime := (time.Now().UnixNano() - c.hitTime[s2cHit.Serial]) / 1e6
+		//if costTime >
+		log.Printf("-------------------------------client index=%d, pid=%d hit cost time %d\n", c.Index, c.PtData.PID, costTime)
+		delete(c.hitTime, s2cHit.Serial)
 	}
 	return true
 }
