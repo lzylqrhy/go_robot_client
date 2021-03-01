@@ -26,6 +26,7 @@ type FClient struct {
 	bulletCache       []bullet // 子弹缓存
 	rooms			  []protocols.Room // 房间列表
 	fireTime,hitTime  map[uint32]int64
+	getInfoTime		  int64
 }
 
 func NewClient(index uint, pd *common.PlatformData, dialer myNet.MyDialer) common.Client {
@@ -214,6 +215,7 @@ func (c *FClient) processEnterRoom(p *protocols.Protocol) bool {
 	// 请求场景信息
 	var c2sSceneInfo protocols.C2SGetSceneInfo
 	c.SendPacket(c2sSceneInfo.Bytes())
+	c.getInfoTime = time.Now().UnixNano() / 1e6
 	return true
 }
 
@@ -302,6 +304,7 @@ func (c *FClient) processBulletList(p *protocols.Protocol) bool {
 		}
 	}
 	c.isWork = true
+	log.Println("----------------------------c.getInfo cost", time.Now().UnixNano() / 1e6 - c.getInfoTime)
 	return true
 }
 
