@@ -68,9 +68,11 @@ func (c *FClient) cleanBulletCache() {
 	if len(c.pond.mapFish) == 0 {
 		return
 	}
+	isHit := false
 	for _, b := range c.bulletCache {
 		serial := c.getOneFish()
 		if serial > 0 {
+			isHit = true
 			// 发送命中鱼
 			var c2sHit = protocols.C2SHitFish{
 				BulletSerial: b.Serial,
@@ -81,7 +83,9 @@ func (c *FClient) cleanBulletCache() {
 			c.hitTime[b.Serial] = time.Now().UnixNano()
 		}
 	}
-	c.bulletCache = c.bulletCache[:0]
+	if isHit {
+		c.bulletCache = c.bulletCache[:0]
+	}
 }
 
 func (c *FClient)OnConnected()  {
@@ -293,31 +297,34 @@ func (c *FClient) processBulletList(p *protocols.Protocol) bool {
 			})
 			continue
 		}
-		c.pond.mapBullet[b.Serial] = bullet{
-			Serial: b.Serial,
-			OriginID: b.OriginID,
-			SeatID: b.SeatID,
-			CharID: b.CharID,
-			SkinID: b.SkinID,
-			Radian: b.Radian,
-			BornTime: b.BornTime,
-		}
+		//c.pond.mapBullet[b.Serial] = bullet{
+		//	Serial: b.Serial,
+		//	OriginID: b.OriginID,
+		//	SeatID: b.SeatID,
+		//	CharID: b.CharID,
+		//	SkinID: b.SkinID,
+		//	Radian: b.Radian,
+		//	BornTime: b.BornTime,
+		//}
 	}
 	c.isWork = true
 	log.Println("----------------------------c.getInfo cost", time.Now().UnixNano() / 1e6 - c.getInfoTime)
 	return true
 }
 
+const CostWarning = 0
+
 func (c *FClient) fire() {
 	// 判断钱是否足够
 	if c.gameCurrency < uint64(c.caliber) {
-		log.Printf("client %d has no enough coin, need=%d, cur=%d, will exit \n", c.charID, c.caliber, c.gameCurrency)
+		log.Printf("client index=%d charid=%d has no enough coin, need=%d, cur=%d, will exit \n", c.Index, c.charID, c.caliber, c.gameCurrency)
 		c.Dialer.Disconnect()
 		c.isWork = false
 		return
 	}
 	// 判断缓存的子弹是否达到上限
 	if len(c.bulletCache) >= 20 {
+		log.Printf("client index=%d charid=%d has max buttel count >= 20 \n", c.Index, c.charID)
 		return
 	}
 	// 发射子弹
@@ -340,16 +347,12 @@ func (c *FClient) processFire(p *protocols.Protocol) bool {
 		return true
 	}
 	costTime := (time.Now().UnixNano() - c.fireTime[s2cFire.OriginID]) / 1e6
-	//if costTime > 50 {
+	if costTime > CostWarning {
 		log.Printf("-------------------------------client index=%d, pid=%d fire cost time %d\n", c.Index, c.PtData.PID, costTime)
-	//}
+	}
 	delete(c.fireTime, s2cFire.OriginID)
 	if 0 != s2cFire.Result {
 		log.Printf("client index=%d, pid=%d fire failed, result=%d \n", c.Index, c.PtData.PID, s2cFire.Result)
-		return true
-	}
-	if s2cFire.CharID != c.charID {
-		// 别人的子弹不管
 		return true
 	}
 	//log.Printf("client index=%d, pid=%d fire successfully\n", c.Index, c.PtData.PID)
@@ -383,21 +386,33 @@ func (c *FClient) processFire(p *protocols.Protocol) bool {
 
 func (c *FClient) getOneFish() uint32 {
 	if 0 == len(c.pond.mapFish) {
+		log.Printf("---------------------------------client index=%d, pid=%d has no any fish\n", c.Index, c.PtData.PID)
 		return 0
 	}
-	var count int
 	fishShow := make([]uint32, 0, 32) // 可绘制出来的鱼
 	for k, v := range c.pond.mapFish {
 		if v.BornTime <= float64(c.getServerTime()) {
 			fishShow = append(fishShow, k)
-			count++
 		}
 	}
-	if count == 0 {
+	count := len(fishShow)
+	if 0 == count {
+		log.Printf("---------------------------------client index=%d, pid=%d has no target fish, all fish count=%d\n", c.Index, c.PtData.PID, len(c.pond.mapFish))
 		return 0
 	}
 	index := rand.Int31n(int32(count))
 	return fishShow[index]
+
+	//count := len(c.pond.mapFish)
+	//index := rand.Int31n(int32(count)) + 1
+	//for k := range c.pond.mapFish {
+	//	index--
+	//	if 0 == index {
+	//		return k
+	//	}
+	//}
+	//log.Printf("---------------------------------client index=%d, pid=%d has no target fish, all fish count=%d\n", c.Index, c.PtData.PID, len(c.pond.mapFish))
+	//return 0
 }
 
 func (c *FClient) processHitFish(p *protocols.Protocol) bool {
@@ -406,14 +421,15 @@ func (c *FClient) processHitFish(p *protocols.Protocol) bool {
 	for _, f := range s2cHit.DeadFish {
 		if f.IsDead > 0 {
 			delete(c.pond.mapFish, f.Serial)
-			//log.Printf("client index=%d, pid=%d captured fish\n", c.Index, c.PtData.PID)
+			//log.Printf("client index=%d, pid=%d captured fish=%d\n", c.Index, c.PtData.PID, f.Serial)
 		}
 	}
 	if s2cHit.CharID == c.charID {
 		c.gameCurrency = uint64(s2cHit.Currency)
 		costTime := (time.Now().UnixNano() - c.hitTime[s2cHit.Serial]) / 1e6
-		//if costTime >
-		log.Printf("-------------------------------client index=%d, pid=%d hit cost time %d\n", c.Index, c.PtData.PID, costTime)
+		if costTime > CostWarning {
+			log.Printf("-------------------------------client index=%d, pid=%d hit cost time %d\n", c.Index, c.PtData.PID, costTime)
+		}
 		delete(c.hitTime, s2cHit.Serial)
 	}
 	return true
