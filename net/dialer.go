@@ -26,6 +26,6 @@ func NewConnect(protocol, sAddr string) MyDialer {
 	case TCP:
 		return NewTCPConnect(sAddr)
 	}
-	log.Panic("game id is not undefined")
+	log.Panic("net protocol is not undefined")
 	return nil
 }

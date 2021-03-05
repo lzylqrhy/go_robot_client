@@ -6,6 +6,7 @@ import (
 	myNet "github/go-robot/net"
 	"github/go-robot/protocols"
 	"log"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
@@ -70,6 +71,10 @@ func DoWork(ctx context.Context, wg *sync.WaitGroup, c Client, d myNet.MyDialer)
 		defer func() {
 			cancel()
 			wg.Done()
+			if r := recover(); nil != r {
+				log.Println("run time error was caught: ", r)
+				log.Printf("error stack: %v \n", string(debug.Stack()))
+			}
 		}()
 		// 驱动网络连接
 		if !d.Run(myCtx, wg) {

@@ -1,21 +1,26 @@
 package protocols
 
-import "github/go-robot/util"
+import (
+	"encoding/json"
+	"github/go-robot/util"
+)
 
 const (
-	PlayerCode = 0x101	// 玩家个人信息
-	EnterHallOrRoomCode = 0x103	// 登录成功后进入大厅或房间
-	RoomListCode = 0x300	// 房间列表
-	EnterRoomCode = 0x301	// 进入房间
-	SceneInfoCode = 0x305	// 请求场景信息
-	PlayerSeatCode = 0x306	// 鱼池座位列表信息
-	FishListCode = 0x307	// 鱼池鱼列表信息
-	BulletListCode = 0x308	// 鱼池子弹列表信息
-	FireCode = 0x309 // 开火
-	HitFishCode = 0x30B	// 命中鱼
-	SyncFishBoom = 0x30D	// 同步鱼潮
-	GenerateFish = 0x30E	// 生成鱼
-	TransmitCode = 0x318	// 转发行为
+	PlayerCode          = 0x101 // 玩家个人信息
+	EnterHallOrRoomCode = 0x103 // 登录成功后进入大厅或房间
+	ReadPacketInfo      = 0x105 // 红包抽奖信息
+	DrawReadPacket      = 0x106 // 开红包
+	RoomListCode        = 0x300 // 房间列表
+	EnterRoomCode       = 0x301 // 进入房间
+	SceneInfoCode       = 0x305 // 请求场景信息
+	PlayerSeatCode      = 0x306 // 鱼池座位列表信息
+	FishListCode        = 0x307 // 鱼池鱼列表信息
+	BulletListCode      = 0x308 // 鱼池子弹列表信息
+	FireCode            = 0x309 // 开火
+	HitFishCode         = 0x30B // 命中鱼
+	SyncFishBoom        = 0x30D // 同步鱼潮
+	GenerateFish        = 0x30E // 生成鱼
+	TransmitCode = 0x318        // 转发行为
 )
 
 type S2CPlayerInfo struct {
@@ -394,4 +399,30 @@ func (p *S2CGenerateFish) Parse(pb *Protocol) {
 		util.CheckError(pb.GetNumber(&f.OffsetZ))
 		util.CheckError(pb.GetNumber(&f.BornTime))
 	}
+}
+
+type C2SDrawReadPacket struct {
+	Grade uint8
+}
+
+func (p *C2SDrawReadPacket) Bytes() []byte {
+	var pb Protocol
+	pb.SetCmd(DrawReadPacket)
+	pb.AppendNumber(p)
+	return pb.Bytes()
+}
+
+type S2CRedPacketInfo struct {
+	Chip uint64
+	IsNewPlayer bool
+}
+
+func (p *S2CRedPacketInfo) Parse(pb *Protocol) {
+	Info, err := pb.GetStringUint16()
+	util.CheckError(err)
+	jv := make(map[string]interface{})
+	err = json.Unmarshal([]byte(Info), &jv)
+	util.CheckError(err)
+	p.Chip = uint64(jv["chipin"].(float64))
+	p.IsNewPlayer = uint8(jv["np"].(float64)) == 1
 }

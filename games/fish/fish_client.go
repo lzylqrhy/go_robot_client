@@ -27,6 +27,7 @@ type FClient struct {
 	rooms			  []protocols.Room // 房间列表
 	fireTime,hitTime  map[uint32]int64
 	getInfoTime		  int64
+	roomID			  uint32
 }
 
 func NewClient(index uint, pd *common.PlatformData, dialer myNet.MyDialer) common.Client {
@@ -110,6 +111,8 @@ func (c *FClient)ProcessProtocols(p *protocols.Protocol) bool {
 		return c.processLogin(p)
 	case protocols.EnterHallOrRoomCode:
 		return c.processEnterHallOrRoom(p)
+	case protocols.ReadPacketInfo:
+		return c.processDrawRedPacket(p)
 	case protocols.RoomListCode:
 		return c.processRoomList(p)
 	case protocols.PlayerCode:
@@ -133,7 +136,7 @@ func (c *FClient)ProcessProtocols(p *protocols.Protocol) bool {
 	case protocols.GenerateFish:
 		return c.processGenerateFish(p)
 	}
-	//log.Printf("cmd:0x%04x don't process\n", p.Head.Cmd)
+	log.Printf("cmd:0x%04x don't process\n", p.Head.Cmd)
 	return true
 }
 
@@ -215,6 +218,7 @@ func (c *FClient) processEnterRoom(p *protocols.Protocol) bool {
 			c.Index, c.PtData.PID, s2cEnterRoom.RoomID, s2cEnterRoom.Result)
 		return false
 	}
+	c.roomID = s2cEnterRoom.RoomID
 	log.Printf("client index=%d, pid=%d enter room=%d successfully\n", c.Index, c.PtData.PID, s2cEnterRoom.RoomID)
 	// 请求场景信息
 	var c2sSceneInfo protocols.C2SGetSceneInfo
@@ -461,6 +465,31 @@ func (c *FClient) processSyncFishBoom(p *protocols.Protocol) bool {
 	if s2cBoom.Status == 1 || s2cBoom.Status == 3 {
 		// 清空场景中的鱼
 		c.pond.mapFish.Clear()
+	}
+	return true
+}
+
+func (c *FClient) processDrawRedPacket(p *protocols.Protocol) bool {
+	var s2cRedPacket protocols.S2CRedPacketInfo
+	s2cRedPacket.Parse(p)
+	// 获取红包配置
+	conf := ConfMgr.getTownDrawRedPacketByID(c.roomID)
+	if nil == conf {
+		log.Printf("client index=%d, pid=%d draw red packet, room=%d has no config \n", c.Index, c.PtData.PID, c.roomID)
+		return true
+	}
+	grade := uint8(3)
+	isOK := false
+	if s2cRedPacket.IsNewPlayer {
+		isOK = s2cRedPacket.Chip >= conf.mapNewPlayerGrade[grade]
+	}else {
+		isOK = s2cRedPacket.Chip >= conf.mapNormalGrade[grade]
+	}
+	if isOK {
+		c2sDraw := protocols.C2SDrawReadPacket{}
+		c2sDraw.Grade = grade
+		c.SendPacket(c2sDraw.Bytes())
+		log.Printf("client index=%d, pid=%d draw red packet, grade=%d, is new player = %v  \n", c.Index, c.PtData.PID, grade, s2cRedPacket.IsNewPlayer)
 	}
 	return true
 }

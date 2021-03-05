@@ -8,6 +8,8 @@ import (
 	myNet "github/go-robot/net"
 	"log"
 	"math/rand"
+	"runtime"
+
 	//_ "net/http/pprof"
 	"os"
 	"os/signal"
@@ -17,13 +19,16 @@ import (
 )
 
 func main() {
+	// 设置全局随机种子
+	rand.Seed(time.Now().Unix())
+	// 设置log文件
 	f, err := os.OpenFile("run.log", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.SetOutput(f)
 	defer f.Close()
-	rand.Seed(time.Now().Unix())
+	runtime.Caller()
 	// 读取配置
 	global.LoadSetting()
 	cfg := &global.MainSetting
