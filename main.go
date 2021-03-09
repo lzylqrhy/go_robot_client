@@ -8,8 +8,6 @@ import (
 	myNet "github/go-robot/net"
 	"log"
 	"math/rand"
-	"runtime"
-
 	//_ "net/http/pprof"
 	"os"
 	"os/signal"
@@ -28,7 +26,7 @@ func main() {
 	}
 	log.SetOutput(f)
 	defer f.Close()
-	runtime.Caller()
+
 	// 读取配置
 	global.LoadSetting()
 	cfg := &global.MainSetting
