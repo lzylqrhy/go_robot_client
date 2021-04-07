@@ -22,14 +22,22 @@ type roomDrawRedPacket struct {
 	mapNormalGrade, mapNewPlayerGrade map[uint8]uint64
 }
 
+// 鱼配置
+type fishConfig struct {
+	fishID uint32
+	fishType uint32
+}
+
 type ConfigManager struct {
 	paths map[uint32]*pathConfig
 	drawRedPacket map[uint32]*roomDrawRedPacket
+	fishConf map[uint32]uint32	// 鱼配置
 }
 
 func (mgr *ConfigManager) Load() {
 	mgr.loadPathConfig()
 	mgr.loadDrawRedPacketConfig()
+	mgr.loadFishConfig()
 	log.Println("fish's configs are loaded")
 }
 
@@ -117,4 +125,54 @@ func (mgr *ConfigManager) getTownDrawRedPacketByID(id uint32) *roomDrawRedPacket
 		return v
 	}
 	return nil
+}
+
+func (mgr *ConfigManager) loadFishConfig()  {
+	mgr.fishConf = make(map[uint32]uint32)
+	// 先读fish_res.json
+	data := mgr.readFile("configs/fish/fish_res.json")
+	fishRes := make(map[uint32]uint32)
+	jsv := make(map[string]interface{})
+	err := json.Unmarshal(data, &jsv)
+	util.CheckError(err)
+	jvData, isOK := jsv["config"].([]interface{})
+	if !isOK {
+		util.CheckError(errors.New("fish_res's config is not existed or is not array"))
+	}
+	for _, v := range jvData {
+		p, isOK := v.(map[string]interface{})
+		if !isOK {
+			util.CheckError(errors.New("fish_res's child of config is not object"))
+		}
+		kindID := uint32(p["kind_id"].(float64))
+		fishType := uint32(p["type"].(float64))
+		fishRes[kindID] = fishType
+	}
+	// 再读room_fish.json
+	data = mgr.readFile("configs/fish/room_fish.json")
+	jsv = make(map[string]interface{})
+	err = json.Unmarshal(data, &jsv)
+	util.CheckError(err)
+	jvData, isOK = jsv["config"].([]interface{})
+	if !isOK {
+		util.CheckError(errors.New("fish_res's config is not existed or is not array"))
+	}
+	for _, v := range jvData {
+		p, isOK := v.(map[string]interface{})
+		if !isOK {
+			util.CheckError(errors.New("fish_res's child of config is not object"))
+		}
+		fishID := uint32(p["id"].(float64))
+		kindID := uint32(p["kind_id"].(float64))
+		if t, isOK := fishRes[kindID]; isOK {
+			mgr.fishConf[fishID] = t
+		}
+	}
+}
+
+func (mgr *ConfigManager) getFishTypeByID(id uint32) uint32 {
+	if v, isOK := mgr.fishConf[id]; isOK {
+		return v
+	}
+	return 0
 }

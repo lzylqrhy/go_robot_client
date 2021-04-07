@@ -394,8 +394,16 @@ func (c *FClient) getOneFish() uint32 {
 		return 0
 	}
 	fishShow := make([]uint32, 0, 32) // 可绘制出来的鱼
+	checkType := len(global.FishSetting.CaptureFishType) > 0
 	for k, v := range c.pond.mapFish {
 		if v.BornTime <= float64(c.getServerTime()) {
+			if checkType {
+				t := ConfMgr.getFishTypeByID(v.FishID)
+				if _, isExisting := global.FishSetting.CaptureFishType[t]; !isExisting {
+					continue
+				}
+				log.Printf("---------------------------------client index=%d, pid=%d can capture fish=%d, type=%d\n", c.Index, c.PtData.PID, k, t)
+			}
 			fishShow = append(fishShow, k)
 		}
 	}
@@ -406,17 +414,6 @@ func (c *FClient) getOneFish() uint32 {
 	}
 	index := rand.Int31n(int32(count))
 	return fishShow[index]
-
-	//count := len(c.pond.mapFish)
-	//index := rand.Int31n(int32(count)) + 1
-	//for k := range c.pond.mapFish {
-	//	index--
-	//	if 0 == index {
-	//		return k
-	//	}
-	//}
-	//log.Printf("---------------------------------client index=%d, pid=%d has no target fish, all fish count=%d\n", c.Index, c.PtData.PID, len(c.pond.mapFish))
-	//return 0
 }
 
 func (c *FClient) processHitFish(p *protocols.Protocol) bool {

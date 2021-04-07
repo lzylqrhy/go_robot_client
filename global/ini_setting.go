@@ -22,6 +22,7 @@ var GameCommonSetting struct{
 var FishSetting struct {
 	ServerAddr string
 	RoomID     uint
+	CaptureFishType map[uint32]struct{}
 }
 
 func LoadSetting()  {
@@ -78,6 +79,15 @@ func loadGameSetting() {
 		if section.HasKey("room_id") {
 			FishSetting.RoomID, err = section.Key("room_id").Uint()
 			util.CheckError(err)
+		}
+		FishSetting.CaptureFishType = make(map[uint32]struct{})
+		if section.HasKey("capturing_fish_type") {
+			tempValue, err := section.Key("capturing_fish_type").StrictInt64s(",")
+			util.CheckError(err)
+			var empty struct{}
+			for _, v := range tempValue {
+				FishSetting.CaptureFishType[uint32(v)] = empty
+			}
 		}
 	}
 	log.Println("load ./configs/game.ini completed")
