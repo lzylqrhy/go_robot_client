@@ -8,7 +8,7 @@ type buff struct {
 
 type fish struct {
 	Serial   uint32
-	FishID   uint32
+	KindID   uint32
 	PathID   uint32
 	Speed    uint32
 	OffsetX  uint32

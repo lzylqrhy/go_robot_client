@@ -3,55 +3,150 @@
         "town_id":"房间ID",
         "init_chipin":"初始赠送投注额",
         "clear_all":"领取奖励后是否清空投注（0 否 1 是）",
+        "leave_clear_time":"离开后多少时间清空红包抽奖投注金额（单位：分钟）",
         "data":[{
                 "type":"类型（1-3）",
                 "chipin":"领奖所需投注额",
                 "bounty":"奖励道具"
-            }]
+            }],
+		"房间说明":"20011,20012,20013欢乐场，20021，20022，20023红包场"	
     },
     "config":[
         {
             "town_id":20001,
             "init_chipin":0,
             "clear_all":1,
+            "leave_clear_time":0,
             "normal":[
-                {"type":1,"chipin":188000,"bounty":[{"msid":50560002,"num":1,"percent":4000},{"msid":50560002,"num":5,"percent":4000},{"msid":50560002,"num":15,"percent":2000}]},
-                {"type":2,"chipin":1880000,"bounty":[{"msid":50560002,"num":100,"percent":4000},{"msid":50560002,"num":200,"percent":4000},{"msid":50560002,"num":500,"percent":2000}]},
-                {"type":3,"chipin":6800000,"bounty":[{"msid":50560002,"num":500,"percent":4000},{"msid":50560002,"num":1000,"percent":4000},{"msid":50560002,"num":1500,"percent":2000}]}
+                {"type":1,"chipin":88000,"bounty":[{"msid":50560002,"num":5,"percent":4000},{"msid":50560002,"num":10,"percent":4000},{"msid":50560002,"num":15,"percent":2000}]},
+                {"type":2,"chipin":680000,"bounty":[{"msid":50560002,"num":100,"percent":3500},{"msid":50560002,"num":200,"percent":5000},{"msid":50560002,"num":500,"percent":1500}]},
+                {"type":3,"chipin":1280000,"bounty":[{"msid":50560002,"num":200,"percent":3500},{"msid":50560002,"num":500,"percent":5500},{"msid":50560002,"num":800,"percent":1000}]}
             ],
             "new_player":[
-                {"type":1,"chipin":188000,"bounty":[{"msid":50560002,"num":1,"percent":4000},{"msid":50560002,"num":5,"percent":4000},{"msid":50560002,"num":15,"percent":2000}]},
-                {"type":2,"chipin":1880000,"bounty":[{"msid":50560002,"num":100,"percent":4000},{"msid":50560002,"num":200,"percent":4000},{"msid":50560002,"num":500,"percent":2000}]},
-                {"type":3,"chipin":6800000,"bounty":[{"msid":50560002,"num":500,"percent":4000},{"msid":50560002,"num":1000,"percent":4000},{"msid":50560002,"num":1500,"percent":2000}]}
+                {"type":1,"chipin":88000,"bounty":[{"msid":50560002,"num":5,"percent":4000},{"msid":50560002,"num":10,"percent":4000},{"msid":50560002,"num":15,"percent":2000}]},
+                {"type":2,"chipin":680000,"bounty":[{"msid":50560002,"num":100,"percent":3500},{"msid":50560002,"num":200,"percent":5000},{"msid":50560002,"num":500,"percent":1500}]},
+                {"type":3,"chipin":1280000,"bounty":[{"msid":50560002,"num":200,"percent":3500},{"msid":50560002,"num":500,"percent":5500},{"msid":50560002,"num":800,"percent":1000}]}
             ]
         },{
             "town_id":20002,
             "init_chipin":0,
             "clear_all":1,
+            "leave_clear_time":0,
             "normal":[
-                {"type":1,"chipin":188000,"bounty":[{"msid":50560002,"num":1,"percent":4000},{"msid":50560002,"num":5,"percent":4000},{"msid":50560002,"num":15,"percent":2000}]},
-                {"type":2,"chipin":1880000,"bounty":[{"msid":50560002,"num":100,"percent":4000},{"msid":50560002,"num":200,"percent":4000},{"msid":50560002,"num":500,"percent":2000}]},
-                {"type":3,"chipin":8880000,"bounty":[{"msid":50560002,"num":800,"percent":4000},{"msid":50560002,"num":1200,"percent":4000},{"msid":50560002,"num":1600,"percent":2000}]}
+                {"type":1,"chipin":188000,"bounty":[{"msid":50560002,"num":10,"percent":4000},{"msid":50560002,"num":50,"percent":4000},{"msid":50560002,"num":100,"percent":2000}]},
+                {"type":2,"chipin":888000,"bounty":[{"msid":50560002,"num":200,"percent":3500},{"msid":50560002,"num":300,"percent":5000},{"msid":50560002,"num":500,"percent":1500}]},
+                {"type":3,"chipin":2480000,"bounty":[{"msid":50560002,"num":500,"percent":4000},{"msid":50560002,"num":1000,"percent":5000},{"msid":50560002,"num":1500,"percent":1000}]}
             ],
             "new_player":[
-                {"type":1,"chipin":188000,"bounty":[{"msid":50560002,"num":1,"percent":4000},{"msid":50560002,"num":5,"percent":4000},{"msid":50560002,"num":15,"percent":2000}]},
-                {"type":2,"chipin":1880000,"bounty":[{"msid":50560002,"num":100,"percent":4000},{"msid":50560002,"num":200,"percent":4000},{"msid":50560002,"num":500,"percent":2000}]},
-                {"type":3,"chipin":8880000,"bounty":[{"msid":50560002,"num":800,"percent":4000},{"msid":50560002,"num":1200,"percent":4000},{"msid":50560002,"num":1600,"percent":2000}]}
+                {"type":1,"chipin":188000,"bounty":[{"msid":50560002,"num":10,"percent":4000},{"msid":50560002,"num":50,"percent":4000},{"msid":50560002,"num":100,"percent":2000}]},
+                {"type":2,"chipin":888000,"bounty":[{"msid":50560002,"num":200,"percent":3500},{"msid":50560002,"num":300,"percent":5000},{"msid":50560002,"num":500,"percent":1500}]},
+                {"type":3,"chipin":2480000,"bounty":[{"msid":50560002,"num":500,"percent":4000},{"msid":50560002,"num":1000,"percent":5000},{"msid":50560002,"num":1500,"percent":1000}]}
             ]
         },{
             "town_id":20003,
             "init_chipin":0,
             "clear_all":1,
+            "leave_clear_time":0,
             "normal":[
-                {"type":1,"chipin":1880000,"bounty":[{"msid":50560002,"num":50,"percent":4000},{"msid":50560002,"num":100,"percent":4000},{"msid":50560002,"num":200,"percent":2000}]},
-                {"type":2,"chipin":1280000,"bounty":[{"msid":50560002,"num":500,"percent":4000},{"msid":50560002,"num":1000,"percent":4000},{"msid":50560002,"num":1500,"percent":2000}]},
-                {"type":3,"chipin":25600000,"bounty":[{"msid":50560002,"num":1500,"percent":4000},{"msid":50560002,"num":2000,"percent":4000},{"msid":50560002,"num":2500,"percent":2000}]}
+                {"type":1,"chipin":680000,"bounty":[{"msid":50560002,"num":100,"percent":4000},{"msid":50560002,"num":150,"percent":4000},{"msid":50560002,"num":200,"percent":2000}]},
+                {"type":2,"chipin":6880000,"bounty":[{"msid":50560002,"num":800,"percent":3500},{"msid":50560002,"num":1800,"percent":5500},{"msid":50560002,"num":6800,"percent":1000}]},
+                {"type":3,"chipin":16880000,"bounty":[{"msid":50560002,"num":2800,"percent":3500},{"msid":50560002,"num":6800,"percent":5000},{"msid":50560002,"num":9800,"percent":1500}]}
             ],
             "new_player":[
-                {"type":1,"chipin":1880000,"bounty":[{"msid":50560002,"num":50,"percent":4000},{"msid":50560002,"num":100,"percent":4000},{"msid":50560002,"num":200,"percent":2000}]},
-                {"type":2,"chipin":12800000,"bounty":[{"msid":50560002,"num":500,"percent":4000},{"msid":50560002,"num":1000,"percent":4000},{"msid":50560002,"num":1500,"percent":2000}]},
-                {"type":3,"chipin":25600000,"bounty":[{"msid":50560002,"num":1500,"percent":4000},{"msid":50560002,"num":2000,"percent":4000},{"msid":50560002,"num":2500,"percent":2000}]}
+                {"type":1,"chipin":680000,"bounty":[{"msid":50560002,"num":100,"percent":4000},{"msid":50560002,"num":150,"percent":4000},{"msid":50560002,"num":200,"percent":2000}]},
+                {"type":2,"chipin":6880000,"bounty":[{"msid":50560002,"num":800,"percent":3500},{"msid":50560002,"num":1800,"percent":5500},{"msid":50560002,"num":6800,"percent":1000}]},
+                {"type":3,"chipin":16880000,"bounty":[{"msid":50560002,"num":2800,"percent":3500},{"msid":50560002,"num":6800,"percent":5000},{"msid":50560002,"num":9800,"percent":1500}]}
             ]
+        },
+		{
+            "town_id":20011,
+            "init_chipin":0,
+            "clear_all":1,
+            "leave_clear_time":0,
+            "normal":[
+                {"type":1,"chipin":88000,"bounty":[{"msid":50560002,"num":5,"percent":4000},{"msid":50560002,"num":10,"percent":4000},{"msid":50560002,"num":15,"percent":2000}]},
+                {"type":2,"chipin":680000,"bounty":[{"msid":50560002,"num":100,"percent":3500},{"msid":50560002,"num":200,"percent":5000},{"msid":50560002,"num":500,"percent":1500}]},
+                {"type":3,"chipin":1280000,"bounty":[{"msid":50560002,"num":200,"percent":3500},{"msid":50560002,"num":500,"percent":5500},{"msid":50560002,"num":800,"percent":1000}]}
+            ],
+            "new_player":[
+                {"type":1,"chipin":88000,"bounty":[{"msid":50560002,"num":5,"percent":4000},{"msid":50560002,"num":10,"percent":4000},{"msid":50560002,"num":15,"percent":2000}]},
+                {"type":2,"chipin":680000,"bounty":[{"msid":50560002,"num":100,"percent":3500},{"msid":50560002,"num":200,"percent":5000},{"msid":50560002,"num":500,"percent":1500}]},
+                {"type":3,"chipin":1280000,"bounty":[{"msid":50560002,"num":200,"percent":3500},{"msid":50560002,"num":500,"percent":5500},{"msid":50560002,"num":800,"percent":1000}]}
+            ]
+        },{
+            "town_id":20012,
+            "init_chipin":0,
+            "clear_all":1,
+            "leave_clear_time":0,
+            "normal":[
+                {"type":1,"chipin":188000,"bounty":[{"msid":50560002,"num":10,"percent":4000},{"msid":50560002,"num":50,"percent":4000},{"msid":50560002,"num":100,"percent":2000}]},
+                {"type":2,"chipin":888000,"bounty":[{"msid":50560002,"num":200,"percent":3500},{"msid":50560002,"num":300,"percent":5000},{"msid":50560002,"num":500,"percent":1500}]},
+                {"type":3,"chipin":2480000,"bounty":[{"msid":50560002,"num":500,"percent":4000},{"msid":50560002,"num":1000,"percent":5000},{"msid":50560002,"num":1500,"percent":1000}]}
+            ],
+            "new_player":[
+                {"type":1,"chipin":188000,"bounty":[{"msid":50560002,"num":10,"percent":4000},{"msid":50560002,"num":50,"percent":4000},{"msid":50560002,"num":100,"percent":2000}]},
+                {"type":2,"chipin":888000,"bounty":[{"msid":50560002,"num":200,"percent":3500},{"msid":50560002,"num":300,"percent":5000},{"msid":50560002,"num":500,"percent":1500}]},
+                {"type":3,"chipin":2480000,"bounty":[{"msid":50560002,"num":500,"percent":4000},{"msid":50560002,"num":1000,"percent":5000},{"msid":50560002,"num":1500,"percent":1000}]}
+            ]
+        },{
+            "town_id":20013,
+            "init_chipin":0,
+            "clear_all":1,
+            "leave_clear_time":0,
+            "normal":[
+                {"type":1,"chipin":680000,"bounty":[{"msid":50560002,"num":100,"percent":4000},{"msid":50560002,"num":150,"percent":4000},{"msid":50560002,"num":200,"percent":2000}]},
+                {"type":2,"chipin":5880000,"bounty":[{"msid":50560002,"num":800,"percent":3500},{"msid":50560002,"num":1800,"percent":5500},{"msid":50560002,"num":6800,"percent":1000}]},
+                {"type":3,"chipin":16880000,"bounty":[{"msid":50560002,"num":2800,"percent":3500},{"msid":50560002,"num":6800,"percent":5000},{"msid":50560002,"num":9800,"percent":1500}]}
+            ],
+            "new_player":[
+                {"type":1,"chipin":680000,"bounty":[{"msid":50560002,"num":100,"percent":4000},{"msid":50560002,"num":150,"percent":4000},{"msid":50560002,"num":200,"percent":2000}]},
+                {"type":2,"chipin":5880000,"bounty":[{"msid":50560002,"num":800,"percent":3500},{"msid":50560002,"num":1800,"percent":5500},{"msid":50560002,"num":6800,"percent":1000}]},
+                {"type":3,"chipin":16880000,"bounty":[{"msid":50560002,"num":2800,"percent":3500},{"msid":50560002,"num":6800,"percent":5000},{"msid":50560002,"num":9800,"percent":1500}]}
+            ]
+        },{
+            "town_id":20021,
+            "init_chipin":0,
+            "clear_all":1,
+            "leave_clear_time":0,
+            "normal":[
+                {"type":1,"chipin":88000,"bounty":[{"msid":50560002,"num":5,"percent":4500},{"msid":50560002,"num":10,"percent":4500},{"msid":50560002,"num":15,"percent":1000}]},
+                {"type":2,"chipin":1280000,"bounty":[{"msid":50560002,"num":80,"percent":3000},{"msid":50560002,"num":100,"percent":5000},{"msid":50560002,"num":200,"percent":2000}]},
+                {"type":3,"chipin":2560000,"bounty":[{"msid":50560002,"num":100,"percent":3000},{"msid":50560002,"num":300,"percent":5500},{"msid":50560002,"num":500,"percent":1500}]}
+            ],
+            "new_player":[
+                {"type":1,"chipin":88000,"bounty":[{"msid":50560002,"num":5,"percent":4500},{"msid":50560002,"num":10,"percent":4500},{"msid":50560002,"num":15,"percent":1000}]},
+                {"type":2,"chipin":1280000,"bounty":[{"msid":50560002,"num":50,"percent":3000},{"msid":50560002,"num":100,"percent":5000},{"msid":50560002,"num":200,"percent":2000}]},
+                {"type":3,"chipin":2560000,"bounty":[{"msid":50560002,"num":100,"percent":3000},{"msid":50560002,"num":300,"percent":5500},{"msid":50560002,"num":500,"percent":1500}]}
+            ]
+        },{
+            "town_id":20022,
+            "init_chipin":0,
+            "clear_all":1,
+            "leave_clear_time":0,
+            "normal":[
+                {"type":1,"chipin":188000,"bounty":[{"msid":50560002,"num":10,"percent":5000},{"msid":50560002,"num":20,"percent":4000},{"msid":50560002,"num":50,"percent":1000}]},
+                {"type":2,"chipin":1280000,"bounty":[{"msid":50560002,"num":50,"percent":3500},{"msid":50560002,"num":100,"percent":5000},{"msid":50560002,"num":300,"percent":1500}]},
+                {"type":3,"chipin":2560000,"bounty":[{"msid":50560002,"num":200,"percent":4000},{"msid":50560002,"num":300,"percent":5000},{"msid":50560002,"num":500,"percent":1000}]}
+            ],
+            "new_player":[
+                {"type":1,"chipin":188000,"bounty":[{"msid":50560002,"num":10,"percent":5000},{"msid":50560002,"num":20,"percent":4000},{"msid":50560002,"num":50,"percent":1000}]},
+                {"type":2,"chipin":1280000,"bounty":[{"msid":50560002,"num":50,"percent":3500},{"msid":50560002,"num":100,"percent":5000},{"msid":50560002,"num":300,"percent":1500}]},
+                {"type":3,"chipin":2560000,"bounty":[{"msid":50560002,"num":200,"percent":4000},{"msid":50560002,"num":300,"percent":5000},{"msid":50560002,"num":500,"percent":1000}]}
+            ]
+        },{
+            "town_id":20023,
+            "init_chipin":0,
+            "clear_all":1,
+            "leave_clear_time":0,
+            "normal":[
+                {"type":1,"chipin":680000,"bounty":[{"msid":50560002,"num":50,"percent":4000},{"msid":50560002,"num":80,"percent":4000},{"msid":50560002,"num":150,"percent":2000}]},
+                {"type":2,"chipin":5880000,"bounty":[{"msid":50560002,"num":300,"percent":3000},{"msid":50560002,"num":600,"percent":5500},{"msid":50560002,"num":1200,"percent":1500}]},
+                {"type":3,"chipin":16880000,"bounty":[{"msid":50560002,"num":800,"percent":4000},{"msid":50560002,"num":1800,"percent":5000},{"msid":50560002,"num":6800,"percent":1000}]}
+            ],
+            "new_player":[
+                {"type":1,"chipin":680000,"bounty":[{"msid":50560002,"num":50,"percent":4000},{"msid":50560002,"num":80,"percent":4000},{"msid":50560002,"num":150,"percent":2000}]},
+                {"type":2,"chipin":5880000,"bounty":[{"msid":50560002,"num":300,"percent":3000},{"msid":50560002,"num":600,"percent":5500},{"msid":50560002,"num":1200,"percent":1500}]},
+                {"type":3,"chipin":16880000,"bounty":[{"msid":50560002,"num":800,"percent":4000},{"msid":50560002,"num":1800,"percent":5000},{"msid":50560002,"num":6800,"percent":1000}]}            ]
         }
     ]
 }

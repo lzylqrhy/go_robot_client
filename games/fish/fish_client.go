@@ -269,13 +269,13 @@ func (c *FClient) processFishList(p *protocols.Protocol) bool {
 	log.Printf("client index=%d, pid=%d get fish list successfully\n", c.Index, c.PtData.PID)
 	for _, f := range s2cFish.FishList {
 		c.pond.mapFish[f.Serial] = fish{
-			Serial: f.Serial,
-			FishID: f.FishID,
-			PathID: f.PathID,
-			Speed: f.Speed,
-			OffsetX: f.OffsetX,
-			OffsetY: f.OffsetY,
-			OffsetZ: f.OffsetZ,
+			Serial:   f.Serial,
+			KindID:   f.KindID,
+			PathID:   f.PathID,
+			Speed:    f.Speed,
+			OffsetX:  f.OffsetX,
+			OffsetY:  f.OffsetY,
+			OffsetZ:  f.OffsetZ,
 			BornTime: f.BornTime,
 			SwamTime: f.SwamTime,
 		}
@@ -394,11 +394,13 @@ func (c *FClient) getOneFish() uint32 {
 		return 0
 	}
 	fishShow := make([]uint32, 0, 32) // 可绘制出来的鱼
+	mapFishType := make(map[uint32]uint32) // 当前鱼池鱼类型
 	checkType := len(global.FishSetting.CaptureFishType) > 0
 	for k, v := range c.pond.mapFish {
 		if v.BornTime <= float64(c.getServerTime()) {
 			if checkType {
-				t := ConfMgr.getFishTypeByID(v.FishID)
+				t := ConfMgr.getFishTypeByID(v.KindID)
+				mapFishType[t]++
 				if _, isExisting := global.FishSetting.CaptureFishType[t]; !isExisting {
 					continue
 				}
@@ -409,9 +411,10 @@ func (c *FClient) getOneFish() uint32 {
 	}
 	count := len(fishShow)
 	if 0 == count {
-		log.Printf("---------------------------------client index=%d, pid=%d has no target fish, all fish count=%d\n", c.Index, c.PtData.PID, len(c.pond.mapFish))
+		log.Printf("---------------------------------client index=%d, pid=%d has no target fish, all fish count=%d, fish types is %v\n", c.Index, c.PtData.PID, len(c.pond.mapFish), mapFishType)
 		return 0
 	}
+	log.Printf("---------------------------------client index=%d, pid=%d target fish count=%d\n", c.Index, c.PtData.PID, count)
 	index := rand.Int31n(int32(count))
 	return fishShow[index]
 }
@@ -441,13 +444,13 @@ func (c *FClient) processGenerateFish(p *protocols.Protocol) bool {
 	s2cGen.Parse(p)
 	for _, f := range s2cGen.FishList {
 		c.pond.mapFish[f.Serial] = fish{
-			Serial: f.Serial,
-			FishID: f.FishID,
-			PathID: f.PathID,
-			Speed: f.Speed,
-			OffsetX: f.OffsetX,
-			OffsetY: f.OffsetY,
-			OffsetZ: f.OffsetZ,
+			Serial:   f.Serial,
+			KindID:   f.KindID,
+			PathID:   f.PathID,
+			Speed:    f.Speed,
+			OffsetX:  f.OffsetX,
+			OffsetY:  f.OffsetY,
+			OffsetZ:  f.OffsetZ,
 			BornTime: f.BornTime,
 			SwamTime: f.SwamTime,
 		}

@@ -131,7 +131,7 @@ func (mgr *ConfigManager) loadFishConfig()  {
 	mgr.fishConf = make(map[uint32]uint32)
 	// 先读fish_res.json
 	data := mgr.readFile("configs/fish/fish_res.json")
-	fishRes := make(map[uint32]uint32)
+	//fishRes = make(map[uint32]uint32)
 	jsv := make(map[string]interface{})
 	err := json.Unmarshal(data, &jsv)
 	util.CheckError(err)
@@ -146,28 +146,30 @@ func (mgr *ConfigManager) loadFishConfig()  {
 		}
 		kindID := uint32(p["kind_id"].(float64))
 		fishType := uint32(p["type"].(float64))
-		fishRes[kindID] = fishType
+		//fishRes[kindID] = fishType
+		mgr.fishConf[kindID] = fishType
+
 	}
-	// 再读room_fish.json
-	data = mgr.readFile("configs/fish/room_fish.json")
-	jsv = make(map[string]interface{})
-	err = json.Unmarshal(data, &jsv)
-	util.CheckError(err)
-	jvData, isOK = jsv["config"].([]interface{})
-	if !isOK {
-		util.CheckError(errors.New("fish_res's config is not existed or is not array"))
-	}
-	for _, v := range jvData {
-		p, isOK := v.(map[string]interface{})
-		if !isOK {
-			util.CheckError(errors.New("fish_res's child of config is not object"))
-		}
-		fishID := uint32(p["id"].(float64))
-		kindID := uint32(p["kind_id"].(float64))
-		if t, isOK := fishRes[kindID]; isOK {
-			mgr.fishConf[fishID] = t
-		}
-	}
+	//// 再读room_fish.json
+	//data = mgr.readFile("configs/fish/room_fish.json")
+	//jsv = make(map[string]interface{})
+	//err = json.Unmarshal(data, &jsv)
+	//util.CheckError(err)
+	//jvData, isOK = jsv["config"].([]interface{})
+	//if !isOK {
+	//	util.CheckError(errors.New("fish_res's config is not existed or is not array"))
+	//}
+	//for _, v := range jvData {
+	//	p, isOK := v.(map[string]interface{})
+	//	if !isOK {
+	//		util.CheckError(errors.New("fish_res's child of config is not object"))
+	//	}
+	//	fishID := uint32(p["id"].(float64))
+	//	kindID := uint32(p["kind_id"].(float64))
+	//	if t, isOK := fishRes[kindID]; isOK {
+	//		mgr.fishConf[fishID] = t
+	//	}
+	//}
 }
 
 func (mgr *ConfigManager) getFishTypeByID(id uint32) uint32 {

@@ -191,7 +191,7 @@ func (p *S2CSeatsInfo) Parse(pb *Protocol) {
 
 type PtFish struct {
 	Serial   uint32
-	FishID   uint32
+	KindID   uint32
 	PathID   uint32
 	Speed    uint32
 	OffsetX  uint32
@@ -391,7 +391,7 @@ func (p *S2CGenerateFish) Parse(pb *Protocol) {
 	for i:=uint16(0); i < count; i++ {
 		f := &p.FishList[i]
 		util.CheckError(pb.GetNumber(&f.Serial))
-		util.CheckError(pb.GetNumber(&f.FishID))
+		util.CheckError(pb.GetNumber(&f.KindID))
 		util.CheckError(pb.GetNumber(&f.PathID))
 		util.CheckError(pb.GetNumber(&f.Speed))
 		util.CheckError(pb.GetNumber(&f.OffsetX))
