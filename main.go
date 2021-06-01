@@ -30,6 +30,7 @@ func main() {
 	// 读取配置
 	global.LoadSetting()
 	cfg := &global.MainSetting
+
 	// 从平台获取信息
 	userList := common.GetPlatformUserData()
 	var wg sync.WaitGroup
@@ -39,8 +40,10 @@ func main() {
 		// 连接服务器
 		var serverAddr string
 		switch cfg.GameID {
-		case games.FishGame:
+		case global.FishGame:
 			serverAddr = global.FishSetting.ServerAddr
+		case global.FruitGame:
+			serverAddr = global.FruitSetting.ServerAddr
 		}
 		if "" == serverAddr {
 			if myNet.WS == cfg.NetProtocol {

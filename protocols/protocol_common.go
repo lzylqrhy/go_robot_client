@@ -8,6 +8,7 @@ const (
 	C2SLoginCode = 0xC2
 	S2CLoginCode = 0x10
 	ResLoadedCode = 0xB6
+	OpenPackageCode = 0x2D
 )
 
 type C2SPing struct {
@@ -76,4 +77,38 @@ func (p *C2SResourceLoaded) Bytes() []byte {
 	var pb Protocol
 	pb.SetCmd(ResLoadedCode)
 	return pb.Bytes()
+}
+
+type item struct {
+	ModeID uint32
+	ImgID uint32
+	Amount float64
+	Name string
+	Desc string
+	Games string
+}
+
+type S2COpenPackage struct {
+	Items []item
+}
+
+func (p *S2COpenPackage) Parse(pb *Protocol) {
+	var (
+		num uint8
+		err error
+	)
+	util.CheckError(pb.GetNumber(&num))
+	p.Items = make([]item, num)
+	for i := uint8(0); i < num; i++ {
+		it := &p.Items[i]
+		util.CheckError(pb.GetNumber(&it.ModeID))
+		util.CheckError(pb.GetNumber(&it.ImgID))
+		util.CheckError(pb.GetNumber(&it.Amount))
+		it.Name, err = pb.GetStringUint8()
+		util.CheckError(err)
+		it.Desc, err = pb.GetStringUint8()
+		util.CheckError(err)
+		it.Games, err = pb.GetStringUint8()
+		util.CheckError(err)
+	}
 }

@@ -7,61 +7,15 @@ import (
 	"github/go-robot/protocols"
 	"log"
 	"runtime/debug"
-	"strings"
 	"sync"
 	"time"
 )
-
-//type Client interface {
-//	Update(ch chan<- []byte)
-//	OnConnected(ch chan<- []byte)
-//	OnDisconnected()
-//	ProcessProtocols(ch chan<- []byte, p *protocols.Protocol) bool
-//}
 
 type Client interface {
 	Update()
 	OnConnected()
 	OnDisconnected()
 	ProcessProtocols(p *protocols.Protocol) bool
-}
-
-// 客户端基类
-type ClientBase struct {
-	Index     uint32
-	PtData    *PlatformData
-	SevTime   uint64
-	LocalTime uint64
-	Dialer    myNet.MyDialer
-}
-
-// 处理公共协议
-func (c *ClientBase)ProcessCommonProtocols(p *protocols.Protocol) (bool, bool) {
-	switch p.Head.Cmd {
-	case protocols.SyncTimeCode:
-		return true, c.processSyncTime(p)
-	}
-	return false, false
-}
-
-func (c *ClientBase) processSyncTime(p *protocols.Protocol) bool {
-	s2cSync := new(protocols.S2CSyncTime)
-	s2cSync.Parse(p)
-	log.Println(s2cSync)
-	// 请求登录
-	var s2cLogin protocols.C2SLogin
-	s2cLogin.IsChildGame = false
-	var strBuilder strings.Builder
-	strBuilder.WriteString(c.PtData.LoginToken)
-	strBuilder.WriteString(":0x20:1")
-	s2cLogin.Token = strBuilder.String()
-	log.Println("session:", s2cLogin.Token)
-	c.SendPacket(s2cLogin.Bytes())
-	return true
-}
-
-func (c *ClientBase) SendPacket(msg []byte)  {
-	c.Dialer.SendPacket(msg)
 }
 
 func DoWork(ctx context.Context, wg *sync.WaitGroup, c Client, d myNet.MyDialer)  {
@@ -99,7 +53,7 @@ func DoWork(ctx context.Context, wg *sync.WaitGroup, c Client, d myNet.MyDialer)
 						case 1: // 断开连接
 							c.OnDisconnected()
 							// 断线重连，5秒一次
-							Break:
+						Break:
 							for i := 0; i < 5; i++ {
 								select {
 								case <-time.After(5 * time.Second):

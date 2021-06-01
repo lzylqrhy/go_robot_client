@@ -8,19 +8,21 @@ import (
 const (
 	PlayerCode          = 0x101 // 玩家个人信息
 	EnterHallOrRoomCode = 0x103 // 登录成功后进入大厅或房间
-	ReadPacketInfo      = 0x105 // 红包抽奖信息
-	DrawReadPacket      = 0x106 // 开红包
+	ReadPacketInfoCode  = 0x105 // 红包抽奖信息
+	DrawReadPacketCode  = 0x106 // 开红包
 	RoomListCode        = 0x300 // 房间列表
-	EnterRoomCode       = 0x301 // 进入房间
-	SceneInfoCode       = 0x305 // 请求场景信息
-	PlayerSeatCode      = 0x306 // 鱼池座位列表信息
-	FishListCode        = 0x307 // 鱼池鱼列表信息
-	BulletListCode      = 0x308 // 鱼池子弹列表信息
-	FireCode            = 0x309 // 开火
-	HitFishCode         = 0x30B // 命中鱼
-	SyncFishBoom        = 0x30D // 同步鱼潮
-	GenerateFish        = 0x30E // 生成鱼
-	TransmitCode = 0x318        // 转发行为
+	EnterRoomCode      = 0x301  // 进入房间
+	SceneInfoCode      = 0x305  // 请求场景信息
+	PlayerSeatCode     = 0x306  // 鱼池座位列表信息
+	FishListCode       = 0x307  // 鱼池鱼列表信息
+	BulletListCode     = 0x308  // 鱼池子弹列表信息
+	FireCode           = 0x309  // 开火
+	HitFishCode        = 0x30B  // 命中鱼
+	SyncFishBoom       = 0x30D  // 同步鱼潮
+	GenerateFish       = 0x30E  // 生成鱼
+	TransmitCode       = 0x318  // 转发行为
+	PoseidonStatusCode = 0x010C // 波塞冬状态
+	HitPoseidonCode    = 0x010B // 命中波塞冬
 )
 
 type S2CPlayerInfo struct {
@@ -146,7 +148,7 @@ type PtSeat struct {
 	CharID    uint32
 	Figure    string
 	Nick      string
-	Currency  uint64
+	Currency  float64
 	LV        uint8
 	SeatID    uint8
 	CannonID  uint32
@@ -270,7 +272,7 @@ type S2CFire struct {
 	Serial   uint32
 	OriginID uint32
 	Cost     uint32
-	Currency uint64
+	Currency float64
 	SeatID   uint8
 	CharID   uint32
 	SkinID   uint32
@@ -407,7 +409,7 @@ type C2SDrawReadPacket struct {
 
 func (p *C2SDrawReadPacket) Bytes() []byte {
 	var pb Protocol
-	pb.SetCmd(DrawReadPacket)
+	pb.SetCmd(DrawReadPacketCode)
 	pb.AppendNumber(p)
 	return pb.Bytes()
 }
@@ -425,4 +427,52 @@ func (p *S2CRedPacketInfo) Parse(pb *Protocol) {
 	util.CheckError(err)
 	p.Chip = uint64(jv["chipin"].(float64))
 	p.IsNewPlayer = uint8(jv["np"].(float64)) == 1
+}
+
+type S2CPoseidonStatus struct {
+	Status            uint8
+	CurrLoopEndTime   uint32
+	NextLoopStartTime uint32
+	StartTime         string
+	EndTime           string
+	PlayAnimation     uint8
+}
+
+func (p *S2CPoseidonStatus) Parse(pb *Protocol) {
+	var err error
+	util.CheckError(pb.GetNumber(&p.Status))
+	util.CheckError(pb.GetNumber(&p.CurrLoopEndTime))
+	util.CheckError(pb.GetNumber(&p.NextLoopStartTime))
+	p.StartTime, err = pb.GetStringUint8()
+	util.CheckError(err)
+	p.EndTime, err = pb.GetStringUint8()
+	util.CheckError(err)
+	util.CheckError(pb.GetNumber(&p.PlayAnimation))
+}
+
+type C2SHitPoseidon struct {
+	BulletSerial uint32
+	OriginID     uint32
+	LocalTime    float64
+}
+
+func (p *C2SHitPoseidon) Bytes() []byte {
+	var pb Protocol
+	pb.SetCmd(HitPoseidonCode)
+	pb.AppendNumber(p)
+	return pb.Bytes()
+}
+
+type S2CHitPoseidon struct {
+	CharID uint32
+	SeatID uint8
+	Serial uint32
+	OriginID uint32
+	Cost uint32
+	Currency float64
+	LocalTime float64
+}
+
+func (p *S2CHitPoseidon) Parse(pb *Protocol) {
+	util.CheckError(pb.GetNumber(&p))
 }

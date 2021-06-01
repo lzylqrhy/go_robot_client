@@ -28,6 +28,7 @@ type FClient struct {
 	fireTime,hitTime  map[uint32]int64
 	getInfoTime		  int64
 	roomID			  uint32
+	poseidonStatus    uint8  //波塞冬游戏状态
 }
 
 func NewClient(index uint, pd *common.PlatformData, dialer myNet.MyDialer) common.Client {
@@ -111,7 +112,7 @@ func (c *FClient)ProcessProtocols(p *protocols.Protocol) bool {
 		return c.processLogin(p)
 	case protocols.EnterHallOrRoomCode:
 		return c.processEnterHallOrRoom(p)
-	case protocols.ReadPacketInfo:
+	case protocols.ReadPacketInfoCode:
 		return c.processDrawRedPacket(p)
 	case protocols.RoomListCode:
 		return c.processRoomList(p)
@@ -135,6 +136,10 @@ func (c *FClient)ProcessProtocols(p *protocols.Protocol) bool {
 		return c.processSyncFishBoom(p)
 	case protocols.GenerateFish:
 		return c.processGenerateFish(p)
+	case protocols.PoseidonStatusCode:
+		return c.processPoseidonStatus(p)
+	case protocols.HitPoseidonCode:
+		return c.processPoseidonStatus(p)
 	}
 	log.Printf("cmd:0x%04x don't process\n", p.Head.Cmd)
 	return true
@@ -219,7 +224,7 @@ func (c *FClient) processEnterRoom(p *protocols.Protocol) bool {
 		return false
 	}
 	c.roomID = s2cEnterRoom.RoomID
-	log.Printf("client index=%d, pid=%d enter room=%d successfully\n", c.Index, c.PtData.PID, s2cEnterRoom.RoomID)
+	log.Printf("client index=%d, pid=%d player enter room=%d successfully\n", c.Index, c.PtData.PID, s2cEnterRoom.RoomID)
 	// 请求场景信息
 	var c2sSceneInfo protocols.C2SGetSceneInfo
 	c.SendPacket(c2sSceneInfo.Bytes())
@@ -246,14 +251,14 @@ func (c *FClient) processSeatsInfo(p *protocols.Protocol) bool {
 			c.caliber = p.Caliber
 			c.caliberLV = p.CaliberLV
 			c.cannonID = p.CannonID
-			c.gameCurrency = p.Currency
+			c.gameCurrency = uint64(p.Currency)
 			c.status = p.Status
 			continue
 		}
 		c.pond.mapPlayer[p.CharID] = player{
 			CharID: p.CharID,
 			SeatID: p.SeatID,
-			GameCurrency: p.Currency,
+			GameCurrency: uint64(p.Currency),
 			CannonID: p.CannonID,
 			Caliber: p.Caliber,
 			CaliberLV: p.CaliberLV,
@@ -361,7 +366,19 @@ func (c *FClient) processFire(p *protocols.Protocol) bool {
 	}
 	//log.Printf("client index=%d, pid=%d fire successfully\n", c.Index, c.PtData.PID)
 	// 更新游戏币
-	c.gameCurrency = s2cFire.Currency
+	c.gameCurrency = uint64(s2cFire.Currency)
+
+	// 如果波塞冬房间，且要攻击波塞冬，则在波塞冬出现期间只打波塞冬
+	if c.canHitPoseidon() {
+		// 发送命中波塞冬
+		var c2sHit = protocols.C2SHitPoseidon{
+			BulletSerial: s2cFire.Serial,
+			OriginID: s2cFire.OriginID,
+		}
+		c.SendPacket(c2sHit.Bytes())
+		return true
+	}
+
 	// 获取一条鱼
 	serial := c.getOneFish()
 	if serial > 0 {
@@ -491,5 +508,38 @@ func (c *FClient) processDrawRedPacket(p *protocols.Protocol) bool {
 		c.SendPacket(c2sDraw.Bytes())
 		log.Printf("client index=%d, pid=%d draw red packet, grade=%d, is new player = %v  \n", c.Index, c.PtData.PID, grade, s2cRedPacket.IsNewPlayer)
 	}
+	return true
+}
+
+func (c *FClient) isPoseidonRoom() bool {
+	for _, r := range c.rooms {
+		if r.RoomID == c.roomID {
+			if r.Type == 4 {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (c *FClient) canHitPoseidon() bool {
+	if c.isPoseidonRoom() && c.poseidonStatus == 2 && global.FishSetting.HitPoseidon == 1 {
+		return true
+	}
+	return false
+}
+
+func (c *FClient) processPoseidonStatus(p *protocols.Protocol) bool {
+	var s2cPoseidonStatus protocols.S2CPoseidonStatus
+	s2cPoseidonStatus.Parse(p)
+	c.poseidonStatus = s2cPoseidonStatus.Status
+	log.Printf("client index=%d, pid=%d get poseidonStatus successfully! now status[%d]\n", c.Index, c.PtData.PID, c.poseidonStatus)
+	return true
+}
+
+func (c *FClient) processHitPoseidon(p *protocols.Protocol) bool {
+	var s2cHitPoseidon protocols.S2CHitPoseidon
+	s2cHitPoseidon.Parse(p)
+	c.gameCurrency = uint64(s2cHitPoseidon.Currency)
 	return true
 }

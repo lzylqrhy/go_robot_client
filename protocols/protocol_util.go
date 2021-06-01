@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log"
 	"math"
+	"reflect"
 )
 
 const HeadSize = 4	// 协议头长度
@@ -65,8 +66,11 @@ func (p *Protocol)appendString(length interface{}, value string) {
 	p.Content.WriteString(value)
 }
 
-func (p *Protocol)GetNumber(ref interface{}) error {
-	return binary.Read(&p.Content, binary.LittleEndian, ref)
+func (p *Protocol)GetNumber(value interface{}) error {
+	if reflect.TypeOf(value).Kind() != reflect.Ptr {
+		log.Fatalln("value must be pointer type")
+	}
+	return binary.Read(&p.Content, binary.LittleEndian, value)
 }
 
 func (p *Protocol)GetStringUint8() (string, error) {
