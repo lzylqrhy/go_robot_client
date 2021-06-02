@@ -16,6 +16,11 @@ type ClientBase struct {
 	Dialer    myNet.MyDialer	// 网络连接器
 	Items map[uint32]uint64	// 物品
 	IsWorking bool	// 是否在工作
+	RoomID	uint32
+}
+
+func (c *ClientBase) SendPacket(msg []byte)  {
+	c.Dialer.SendPacket(msg)
 }
 
 // 处理公共协议
@@ -43,10 +48,6 @@ func (c *ClientBase) processSyncTime(p *protocols.Protocol) bool {
 	log.Println("session:", s2cLogin.Token)
 	c.SendPacket(s2cLogin.Bytes())
 	return true
-}
-
-func (c *ClientBase) SendPacket(msg []byte)  {
-	c.Dialer.SendPacket(msg)
 }
 
 func (c *ClientBase) processOpenPackage(p *protocols.Protocol) bool {

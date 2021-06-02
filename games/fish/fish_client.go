@@ -17,18 +17,17 @@ type FClient struct {
 	charID            uint32
 	gameCurrency      uint64	// 游戏币
 	seatID            uint8
-	cannonID          uint32
-	caliber           uint32
-	caliberLV         uint8
-	status            uint16   // 游戏状态（来自服务端）
-	isWork            bool     // 是否工作
-	originSerial      uint32   // 子弹最新本地序号
-	bulletCache       []bullet // 子弹缓存
-	rooms			  []protocols.Room // 房间列表
-	fireTime,hitTime  map[uint32]int64
-	getInfoTime		  int64
-	roomID			  uint32
-	poseidonStatus    uint8  //波塞冬游戏状态
+	cannonID         uint32
+	caliber          uint32
+	caliberLV        uint8
+	status           uint16   // 游戏状态（来自服务端）
+	isWork           bool     // 是否工作
+	originSerial     uint32   // 子弹最新本地序号
+	bulletCache      []bullet // 子弹缓存
+	rooms            []protocols.Room // 房间列表
+	fireTime,hitTime map[uint32]int64
+	getInfoTime      int64
+	poseidonStatus   uint8  //波塞冬游戏状态
 }
 
 func NewClient(index uint, pd *common.PlatformData, dialer myNet.MyDialer) common.Client {
@@ -118,7 +117,7 @@ func (c *FClient)ProcessProtocols(p *protocols.Protocol) bool {
 		return c.processRoomList(p)
 	case protocols.PlayerCode:
 		return c.processPlayerInfo(p)
-	case protocols.EnterRoomCode:
+	case protocols.FishEnterRoomCode:
 		return c.processEnterRoom(p)
 	case protocols.SceneInfoCode:
 		return c.processSceneInfo(p)
@@ -140,6 +139,8 @@ func (c *FClient)ProcessProtocols(p *protocols.Protocol) bool {
 		return c.processPoseidonStatus(p)
 	case protocols.HitPoseidonCode:
 		return c.processPoseidonStatus(p)
+	case protocols.SwitchCaliberCode:
+		return c.processSwitchCaliber(p)
 	}
 	log.Printf("cmd:0x%04x don't process\n", p.Head.Cmd)
 	return true
@@ -154,10 +155,6 @@ func (c *FClient) processLogin(p *protocols.Protocol) bool {
 		// 发送资源加载完成
 		var c2sLoaded protocols.C2SResourceLoaded
 		c.SendPacket(c2sLoaded.Bytes())
-		//// 进入房间
-		//var c2sEnterRoom protocols.C2SEnterRoom
-		//c2sEnterRoom.RoomID = 20001
-		//c.SendPacket(c2sEnterRoom.Bytes())
 		return true
 	}
 	log.Printf("client index=%d, pid=%d login failed, status: %d\n", c.Index, c.PtData.PID, s2cLogin.Status)
@@ -199,7 +196,7 @@ func (c *FClient) processEnterHallOrRoom(p *protocols.Protocol) bool {
 		}
 	}
 	// 进入房间
-	var c2sEnterRoom protocols.C2SEnterRoom
+	var c2sEnterRoom protocols.C2SFishEnterRoom
 	c2sEnterRoom.RoomID = roomID
 	c.SendPacket(c2sEnterRoom.Bytes())
 	log.Printf("client index=%d, pid=%d player enter room %d\n", c.Index, c.PtData.PID, roomID)
@@ -215,7 +212,7 @@ func (c *FClient) processRoomList(p *protocols.Protocol) bool {
 }
 
 func (c *FClient) processEnterRoom(p *protocols.Protocol) bool {
-	var s2cEnterRoom protocols.S2CEnterRoom
+	var s2cEnterRoom protocols.S2CFishEnterRoom
 	s2cEnterRoom.Parse(p)
 	if s2cEnterRoom.Result != 0 {
 		// 进入失败
@@ -223,7 +220,7 @@ func (c *FClient) processEnterRoom(p *protocols.Protocol) bool {
 			c.Index, c.PtData.PID, s2cEnterRoom.RoomID, s2cEnterRoom.Result)
 		return false
 	}
-	c.roomID = s2cEnterRoom.RoomID
+	c.RoomID = s2cEnterRoom.RoomID
 	log.Printf("client index=%d, pid=%d player enter room=%d successfully\n", c.Index, c.PtData.PID, s2cEnterRoom.RoomID)
 	// 请求场景信息
 	var c2sSceneInfo protocols.C2SGetSceneInfo
@@ -265,6 +262,8 @@ func (c *FClient) processSeatsInfo(p *protocols.Protocol) bool {
 			Status: p.Status,
 		}
 	}
+	// 切换炮倍
+	c.switchCaliber()
 	return true
 }
 
@@ -490,9 +489,9 @@ func (c *FClient) processDrawRedPacket(p *protocols.Protocol) bool {
 	var s2cRedPacket protocols.S2CRedPacketInfo
 	s2cRedPacket.Parse(p)
 	// 获取红包配置
-	conf := ConfMgr.getTownDrawRedPacketByID(c.roomID)
+	conf := ConfMgr.getTownDrawRedPacketByID(c.RoomID)
 	if nil == conf {
-		log.Printf("client index=%d, pid=%d draw red packet, room=%d has no config \n", c.Index, c.PtData.PID, c.roomID)
+		log.Printf("client index=%d, pid=%d draw red packet, room=%d has no config \n", c.Index, c.PtData.PID, c.RoomID)
 		return true
 	}
 	grade := uint8(3)
@@ -513,7 +512,7 @@ func (c *FClient) processDrawRedPacket(p *protocols.Protocol) bool {
 
 func (c *FClient) isPoseidonRoom() bool {
 	for _, r := range c.rooms {
-		if r.RoomID == c.roomID {
+		if r.RoomID == c.RoomID {
 			if r.Type == 4 {
 				return true
 			}
@@ -541,5 +540,21 @@ func (c *FClient) processHitPoseidon(p *protocols.Protocol) bool {
 	var s2cHitPoseidon protocols.S2CHitPoseidon
 	s2cHitPoseidon.Parse(p)
 	c.gameCurrency = uint64(s2cHitPoseidon.Currency)
+	return true
+}
+
+func (c *FClient)switchCaliber()  {
+	if caliber := uint32(global.FishSetting.Caliber); global.FishSetting.Caliber > 0 && caliber != c.caliber {
+		c2sSwitchCaliber := protocols.C2SSwitchCaliber{Caliber: caliber}
+		c.SendPacket(c2sSwitchCaliber.Bytes())
+	}
+}
+
+func (c *FClient) processSwitchCaliber(p *protocols.Protocol) bool {
+	var s2cSwitchCaliber protocols.S2CSwitchCaliber
+	s2cSwitchCaliber.Parse(p)
+	if s2cSwitchCaliber.CharID == c.charID {
+		c.caliber = s2cSwitchCaliber.Caliber
+	}
 	return true
 }

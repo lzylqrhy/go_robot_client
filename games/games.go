@@ -2,6 +2,7 @@ package games
 
 import (
 	"github/go-robot/common"
+	"github/go-robot/games/aladdin"
 	"github/go-robot/games/fish"
 	"github/go-robot/games/fruit"
 	"github/go-robot/global"
@@ -15,6 +16,8 @@ func NewClient(gameID uint, index uint, pd *common.PlatformData, dialer myNet.My
 		return fish.NewClient(index, pd, dialer)
 	case global.FruitGame:
 		return fruit.NewClient(index, pd, dialer)
+	case global.AladdinGame:
+		return aladdin.NewClient(index, pd, dialer)
 	}
 	log.Panic("game id is not undefined")
 	return nil

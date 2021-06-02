@@ -1,4 +1,4 @@
-package fruit
+package aladdin
 
 import (
 	"github/go-robot/common"
@@ -60,11 +60,13 @@ func (c *FClient)ProcessProtocols(p *protocols.Protocol) bool {
 	switch p.Head.Cmd {
 	case protocols.S2CLoginCode:
 		return c.processLogin(p)
-	case protocols.FruitPlayerCode:
+	case protocols.AladdinPlayerCode:
 		return c.processPlayerInfo(p)
-	case protocols.FruitJoinRoomCode:
+	case protocols.EnterRoomCode:
+		return c.processEnterRoom(p)
+	case protocols.AladdinJoinRoomCode:
 		return c.processJoinRoom(p)
-	case protocols.FruitPlayCode:
+	case protocols.AladdinPlayCode:
 		return c.processPlayResult(p)
 	}
 	log.Printf("cmd:0x%04x don't process\n", p.Head.Cmd)
@@ -81,9 +83,9 @@ func (c *FClient) processLogin(p *protocols.Protocol) bool {
 		var c2sLoaded protocols.C2SResourceLoaded
 		c.SendPacket(c2sLoaded.Bytes())
 		// 进入房间
-		var c2sJoinRoom protocols.C2SFruitJoinRoom
-		c2sJoinRoom.GameID = uint8(global.FruitSetting.RoomID)
-		c.SendPacket(c2sJoinRoom.Bytes())
+		var c2sEnterRoom protocols.C2SEnterRoom
+		c2sEnterRoom.RoomID = uint32(global.AladdinSetting.RoomID)
+		c.SendPacket(c2sEnterRoom.Bytes())
 		return true
 	}
 	log.Printf("client index=%d, pid=%d login failed, status: %d\n", c.Index, c.PtData.PID, s2cLogin.Status)
@@ -91,15 +93,30 @@ func (c *FClient) processLogin(p *protocols.Protocol) bool {
 }
 
 func (c *FClient) processPlayerInfo(p *protocols.Protocol) bool {
-	var s2cPlayer protocols.S2CFruitPlayerInfo
+	var s2cPlayer protocols.S2CAladdinPlayerInfo
 	s2cPlayer.Parse(p)
 	log.Printf("client index=%d, pid=%d get player info successfully, player=%v\n", c.Index, c.PtData.PID, s2cPlayer)
 	c.charID = s2cPlayer.CharID
 	return true
 }
 
+func (c *FClient) processEnterRoom(p *protocols.Protocol) bool {
+	var s2cEnterRoom protocols.S2CEnterRoom
+	s2cEnterRoom.Parse(p)
+	if s2cEnterRoom.Result != 1 {
+		log.Printf("client index=%d, pid=%d enter room failed\n", c.Index, c.PtData.PID)
+	}
+	c.RoomID = s2cEnterRoom.RoomID
+	// 加入房间
+	var c2sJoinRoom protocols.C2SAladdinJoinRoom
+	c2sJoinRoom.GameID = 4
+	c.SendPacket(c2sJoinRoom.Bytes())
+	log.Printf("client index=%d, pid=%d enter room successfully\n", c.Index, c.PtData.PID)
+	return true
+}
+
 func (c *FClient) processJoinRoom(p *protocols.Protocol) bool {
-	var s2cJoinRoom protocols.S2CFruitJoinRoom
+	var s2cJoinRoom protocols.S2CAladdinJoinRoom
 	s2cJoinRoom.Parse(p)
 	if s2cJoinRoom.Result == 1 {
 		// 加入房间成功
@@ -115,7 +132,7 @@ func (c *FClient) processJoinRoom(p *protocols.Protocol) bool {
 }
 
 func (c *FClient) processPlayResult(p *protocols.Protocol) bool {
-	var s2cPlay protocols.S2CFruitPlayResult
+	var s2cPlay protocols.S2CAladdinPlayResult
 	s2cPlay.Parse(p)
 	if s2cPlay.Result == 1 {
 		// 下注成功，返回游戏结果
@@ -134,7 +151,7 @@ func (c *FClient) processPlayResult(p *protocols.Protocol) bool {
 }
 
 func (c *FClient) play() {
-	line, chip := uint8(global.FruitSetting.Line), uint32(global.FruitSetting.Chip)
+	line, chip := uint8(global.AladdinSetting.Line), uint32(global.AladdinSetting.Chip)
 	allAmount := uint32(line) * chip
 	if uint64(allAmount) > c.gameCurrency {
 		log.Printf("client index=%d, pid=%d has no enough money, pull failed, need=%d, cur=%d\n",
@@ -143,9 +160,9 @@ func (c *FClient) play() {
 	}
 	c.gameCurrency -= uint64(allAmount)
 	// 发游戏协议
-	c2sPlay := protocols.C2SFruitPlay{}
-	c2sPlay.Line = uint8(global.FruitSetting.Line)
-	c2sPlay.Amount = uint32(global.FruitSetting.Chip)
+	c2sPlay := protocols.C2SAladdinPlay{}
+	c2sPlay.Line = uint8(global.AladdinSetting.Line)
+	c2sPlay.Amount = allAmount
 	c.SendPacket(c2sPlay.Bytes())
 }
 

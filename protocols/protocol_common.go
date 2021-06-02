@@ -7,6 +7,7 @@ const (
 	SyncTimeCode = 0x3
 	C2SLoginCode = 0xC2
 	S2CLoginCode = 0x10
+	EnterRoomCode = 0x11
 	ResLoadedCode = 0xB6
 	OpenPackageCode = 0x2D
 )
@@ -111,4 +112,25 @@ func (p *S2COpenPackage) Parse(pb *Protocol) {
 		it.Games, err = pb.GetStringUint8()
 		util.CheckError(err)
 	}
+}
+
+type C2SEnterRoom struct {
+	RoomID uint32
+}
+
+func (p *C2SEnterRoom) Bytes() []byte {
+	var pb Protocol
+	pb.SetCmd(EnterRoomCode)
+	pb.AppendNumber(p.RoomID)
+	return pb.Bytes()
+}
+
+type S2CEnterRoom struct {
+	RoomID uint32
+	Result uint8
+}
+
+func (p *S2CEnterRoom) Parse(pb *Protocol) {
+	err := pb.GetNumber(p)
+	util.CheckError(err)
 }

@@ -5,12 +5,12 @@ import (
 )
 
 const (
-	FruitJoinRoomCode		= 0x590	// 加入房间
-	FruitPlayerCode			= 0x596	// 玩家个人信息
-	FruitPlayCode			= 0x531	// 开始游戏、游戏结果
+	AladdinJoinRoomCode		= 0x590	// 加入房间
+	AladdinPlayerCode		= 0x596	// 玩家个人信息
+	AladdinPlayCode			= 0x531	// 开始游戏、游戏结果
 )
 
-type S2CFruitPlayerInfo struct {
+type S2CAladdinPlayerInfo struct {
 	CharID     uint32
 	PID        uint32
 	RegTime    uint32
@@ -27,7 +27,7 @@ type S2CFruitPlayerInfo struct {
 	addr       string
 }
 
-func (p *S2CFruitPlayerInfo) Parse(pb *Protocol) {
+func (p *S2CAladdinPlayerInfo) Parse(pb *Protocol) {
 	var err error
 	util.CheckError(pb.GetNumber(&p.CharID))
 	util.CheckError(pb.GetNumber(&p.PID))
@@ -49,52 +49,52 @@ func (p *S2CFruitPlayerInfo) Parse(pb *Protocol) {
 }
 
 // 加入房间
-type C2SFruitJoinRoom struct {
+type C2SAladdinJoinRoom struct {
 	GameID uint8
 }
 
-func (p *C2SFruitJoinRoom) Bytes() []byte {
+func (p *C2SAladdinJoinRoom) Bytes() []byte {
 	var pb Protocol
-	pb.SetCmd(FruitJoinRoomCode)
+	pb.SetCmd(AladdinJoinRoomCode)
 	pb.AppendNumber(p.GameID)
 	return pb.Bytes()
 }
 
-type S2CFruitJoinRoom struct {
+type S2CAladdinJoinRoom struct {
 	Result uint8
 }
 
-func (p *S2CFruitJoinRoom) Parse(pb *Protocol) {
+func (p *S2CAladdinJoinRoom) Parse(pb *Protocol) {
 	err := pb.GetNumber(p)
 	util.CheckError(err)
 }
 
 // 开始游戏
-type C2SFruitPlay struct {
+type C2SAladdinPlay struct {
 	Line uint8
 	Amount uint32
 	GameID uint8
 }
 
-func (p *C2SFruitPlay) Bytes() []byte {
+func (p *C2SAladdinPlay) Bytes() []byte {
 	var pb Protocol
-	pb.SetCmd(FruitPlayCode)
+	pb.SetCmd(AladdinPlayCode)
 	pb.AppendNumber(p)
 	return pb.Bytes()
 }
 
-type fruitIcon struct {
+type AladdinIcon struct {
 	Index, Icon uint8
 }
 
-type fruitLine struct {
+type AladdinLine struct {
 	ID uint8
 	Point []uint8
 	Multiple uint32
 	IsFree uint8
 }
 
-func (line *fruitLine) Parse(pb *Protocol) {
+func (line *AladdinLine) Parse(pb *Protocol) {
 	util.CheckError(pb.GetNumber(&line.ID))
 	// 连续点的数量
 	var lineNum uint8
@@ -107,39 +107,39 @@ func (line *fruitLine) Parse(pb *Protocol) {
 	util.CheckError(pb.GetNumber(&line.IsFree))
 }
 
-type fruitResult struct {
-	Icon []fruitIcon
-	Lines []fruitLine
+type AladdinResult struct {
+	Icon []AladdinIcon
+	Lines []AladdinLine
 	Amount uint32
+	Grade uint32
 }
 
-func (re *fruitResult) Parse(pb *Protocol) {
+func (re *AladdinResult) Parse(pb *Protocol) {
 	var num uint8
 	util.CheckError(pb.GetNumber(&num))
-	re.Icon = make([]fruitIcon, num)
+	re.Icon = make([]AladdinIcon, num)
 	for i := uint8(0); i < num; i++ {
 		util.CheckError(pb.GetNumber(&re.Icon[i]))
 	}
 	util.CheckError(pb.GetNumber(&num))
-	re.Lines = make([]fruitLine, num)
+	re.Lines = make([]AladdinLine, num)
 	for i := uint8(0); i < num; i++ {
 		re.Lines[i].Parse(pb)
 	}
 	util.CheckError(pb.GetNumber(&re.Amount))
+	util.CheckError(pb.GetNumber(&re.Grade))
 }
 
-type S2CFruitPlayResult struct {
-	Line uint32
+type S2CAladdinPlayResult struct {
 	Result uint8
-	ReInfo []fruitResult
+	ReInfo []AladdinResult
 }
 
-func (p *S2CFruitPlayResult) Parse(pb *Protocol) {
-	util.CheckError(pb.GetNumber(&p.Line))
+func (p *S2CAladdinPlayResult) Parse(pb *Protocol) {
 	util.CheckError(pb.GetNumber(&p.Result))
 	var count uint8
 	util.CheckError(pb.GetNumber(&count))
-	p.ReInfo = make([]fruitResult, count)
+	p.ReInfo = make([]AladdinResult, count)
 	for i := uint8(0); i < count; i++ {
 		p.ReInfo[i].Parse(pb)
 	}

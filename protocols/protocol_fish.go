@@ -6,23 +6,24 @@ import (
 )
 
 const (
-	PlayerCode          = 0x101 // 玩家个人信息
-	EnterHallOrRoomCode = 0x103 // 登录成功后进入大厅或房间
-	ReadPacketInfoCode  = 0x105 // 红包抽奖信息
-	DrawReadPacketCode  = 0x106 // 开红包
-	RoomListCode        = 0x300 // 房间列表
-	EnterRoomCode      = 0x301  // 进入房间
-	SceneInfoCode      = 0x305  // 请求场景信息
-	PlayerSeatCode     = 0x306  // 鱼池座位列表信息
-	FishListCode       = 0x307  // 鱼池鱼列表信息
-	BulletListCode     = 0x308  // 鱼池子弹列表信息
-	FireCode           = 0x309  // 开火
-	HitFishCode        = 0x30B  // 命中鱼
-	SyncFishBoom       = 0x30D  // 同步鱼潮
-	GenerateFish       = 0x30E  // 生成鱼
-	TransmitCode       = 0x318  // 转发行为
-	PoseidonStatusCode = 0x010C // 波塞冬状态
-	HitPoseidonCode    = 0x010B // 命中波塞冬
+	PlayerCode          = 0x101  // 玩家个人信息
+	EnterHallOrRoomCode = 0x103  // 登录成功后进入大厅或房间
+	ReadPacketInfoCode  = 0x105  // 红包抽奖信息
+	DrawReadPacketCode  = 0x106  // 开红包
+	RoomListCode        = 0x300  // 房间列表
+	FishEnterRoomCode   = 0x301  // 进入房间
+	SceneInfoCode       = 0x305  // 请求场景信息
+	PlayerSeatCode      = 0x306  // 鱼池座位列表信息
+	FishListCode        = 0x307  // 鱼池鱼列表信息
+	BulletListCode      = 0x308  // 鱼池子弹列表信息
+	FireCode            = 0x309  // 开火
+	SwitchCaliberCode   = 0x30A  // 开火
+	HitFishCode         = 0x30B  // 命中鱼
+	SyncFishBoom        = 0x30D  // 同步鱼潮
+	GenerateFish        = 0x30E  // 生成鱼
+	TransmitCode        = 0x318  // 转发行为
+	PoseidonStatusCode  = 0x010C // 波塞冬状态
+	HitPoseidonCode    = 0x010B  // 命中波塞冬
 )
 
 type S2CPlayerInfo struct {
@@ -87,25 +88,25 @@ func (p *S2CRoomList) Parse(pb *Protocol) {
 	}
 }
 
-type C2SEnterRoom struct {
+type C2SFishEnterRoom struct {
 	RoomID uint32
 	ChannelID uint32
 }
 
-func (p *C2SEnterRoom) Bytes() []byte {
+func (p *C2SFishEnterRoom) Bytes() []byte {
 	var pb Protocol
-	pb.SetCmd(EnterRoomCode)
+	pb.SetCmd(FishEnterRoomCode)
 	pb.AppendNumber(p.RoomID)
 	pb.AppendNumber(p.ChannelID)
 	return pb.Bytes()
 }
 
-type S2CEnterRoom struct {
+type S2CFishEnterRoom struct {
 	RoomID uint32
 	Result uint8
 }
 
-func (p *S2CEnterRoom) Parse(pb *Protocol) {
+func (p *S2CFishEnterRoom) Parse(pb *Protocol) {
 	err := pb.GetNumber(p)
 	util.CheckError(err)
 }
@@ -475,4 +476,25 @@ type S2CHitPoseidon struct {
 
 func (p *S2CHitPoseidon) Parse(pb *Protocol) {
 	util.CheckError(pb.GetNumber(&p))
+}
+
+type C2SSwitchCaliber struct {
+	Caliber uint32
+}
+
+func (p *C2SSwitchCaliber) Bytes() []byte {
+	var pb Protocol
+	pb.SetCmd(SwitchCaliberCode)
+	pb.AppendNumber(p)
+	return pb.Bytes()
+}
+
+type S2CSwitchCaliber struct {
+	CharID uint32
+	SeatID uint8
+	Caliber uint32
+}
+
+func (p *S2CSwitchCaliber) Parse(pb *Protocol) {
+	util.CheckError(pb.GetNumber(p))
 }

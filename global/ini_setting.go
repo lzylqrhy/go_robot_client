@@ -24,9 +24,17 @@ var FishSetting struct {
 	RoomID     uint
 	CaptureFishType map[uint32]struct{}
 	HitPoseidon uint
+	Caliber uint
 }
 
 var FruitSetting struct{
+	ServerAddr string
+	RoomID     uint
+	Line uint
+	Chip uint
+}
+
+var AladdinSetting struct{
 	ServerAddr string
 	RoomID     uint
 	Line uint
@@ -86,11 +94,30 @@ func loadGameSetting() {
 	case FruitGame:
 		getFruitConfig(conf)
 	case AladdinGame:
+		getAladdinConfig(conf)
 	default:
-		log.Println("load ./configs/game.ini completed")
+		log.Println("load ./configs/game.ini failed")
 		break
 	}
 	log.Println("load ./configs/game.ini completed")
+}
+
+func getOptionInt(section *ini.Section, key string, def int) int {
+	if section.HasKey(key) {
+		v, err := section.Key(key).Int()
+		util.CheckError(err)
+		return v
+	}
+	return def
+}
+
+func getOptionUInt(section *ini.Section, key string, def uint) uint {
+	if section.HasKey(key) {
+		v, err := section.Key(key).Uint()
+		util.CheckError(err)
+		return v
+	}
+	return def
 }
 
 func getFishConfig(conf *ini.File){
@@ -98,12 +125,9 @@ func getFishConfig(conf *ini.File){
 	if section == nil {
 		log.Fatalln("fish setting is not existed in game.ini")
 	}
-	var err error
 	FishSetting.ServerAddr = section.Key("server_addr").String()
-	if section.HasKey("room_id") {
-		FishSetting.RoomID, err = section.Key("room_id").Uint()
-		util.CheckError(err)
-	}
+	FishSetting.RoomID = getOptionUInt(section, "room_id", 0)
+
 	FishSetting.CaptureFishType = make(map[uint32]struct{})
 	if section.HasKey("capturing_fish_type") {
 		tempValue, err := section.Key("capturing_fish_type").StrictInt64s(",")
@@ -113,10 +137,9 @@ func getFishConfig(conf *ini.File){
 			FishSetting.CaptureFishType[uint32(v)] = empty
 		}
 	}
-	if section.HasKey("hit_poseidon") {
-		FishSetting.HitPoseidon, err = section.Key("hit_poseidon").Uint()
-		util.CheckError(err)
-	}
+
+	FishSetting.HitPoseidon = getOptionUInt(section, "hit_poseidon", 0)
+	FishSetting.Caliber = getOptionUInt(section, "caliber", 0)
 }
 
 func getFruitConfig(conf *ini.File){
@@ -136,20 +159,19 @@ func getFruitConfig(conf *ini.File){
 	FruitSetting.Chip = getOptionUInt(section, "chip", 1)
 }
 
-func getOptionInt(section *ini.Section, key string, def int) int {
-	if section.HasKey(key) {
-		v, err := section.Key(key).Int()
-		util.CheckError(err)
-		return v
+func getAladdinConfig(conf *ini.File){
+	section := conf.Section("aladdin")
+	if section == nil {
+		log.Fatalln("fruit setting is not existed in game.ini")
 	}
-	return def
-}
-
-func getOptionUInt(section *ini.Section, key string, def uint) uint {
-	if section.HasKey(key) {
-		v, err := section.Key(key).Uint()
+	var err error
+	AladdinSetting.ServerAddr = section.Key("server_addr").String()
+	if section.HasKey("room_id") {
+		AladdinSetting.RoomID, err = section.Key("room_id").Uint()
 		util.CheckError(err)
-		return v
+	} else {
+		log.Fatalln("fruit setting need room_id option in game.ini")
 	}
-	return def
+	AladdinSetting.Line = getOptionUInt(section, "line", 50)
+	AladdinSetting.Chip = getOptionUInt(section, "chip", 1)
 }
