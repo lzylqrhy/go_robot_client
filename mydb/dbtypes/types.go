@@ -1,4 +1,4 @@
-package db_types
+package dbtypes
 
 type DBRow map[string]interface{}
 

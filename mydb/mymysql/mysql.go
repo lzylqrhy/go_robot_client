@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
-	"github/go-robot/mydb/db_types"
+	"github/go-robot/mydb/dbtypes"
 	"github/go-robot/util"
 	"log"
 	"time"
@@ -52,7 +52,7 @@ func (my *MySQL)ping() bool {
 	return true
 }
 
-func (my *MySQL)Query(sqlFmt string, args ...interface{}) []db_type.DBRow {
+func (my *MySQL)Query(sqlFmt string, args ...interface{}) []dbtypes.DBRow {
 	if !my.ping() {
 		return nil
 	}
@@ -88,14 +88,14 @@ func (my *MySQL)Query(sqlFmt string, args ...interface{}) []db_type.DBRow {
 		scanArgs[i] = &v
 	}
 	// 结果列表
-	results := make([]db_type.DBRow, 0)
+	results := make([]dbtypes.DBRow, 0)
 	for rows.Next() {
 		err = rows.Scan(scanArgs...)
 		if err != nil {
 			util.CheckError(err)
 			return nil
 		}
-		re := make(db_type.DBRow)
+		re := make(dbtypes.DBRow)
 		for i, v := range scanArgs{
 			re[cols[i]] = *v.(*interface{})
 		}

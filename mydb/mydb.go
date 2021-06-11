@@ -3,7 +3,7 @@ package mydb
 import (
 	"context"
 	"github/go-robot/global"
-	_interface "github/go-robot/mydb/db_types"
+	_interface "github/go-robot/mydb/dbtypes"
 	"github/go-robot/mydb/mymysql"
 )
 

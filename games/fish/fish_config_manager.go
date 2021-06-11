@@ -152,15 +152,15 @@ func (mgr *ConfigManager) loadFishConfig()  {
 	}
 	//// 再读room_fish.json
 	//data = mgr.readFile("configs/fish/room_fish.json")
-	//jsv = make(map[string]db_types{})
+	//jsv = make(map[string]dbtypes{})
 	//err = json.Unmarshal(data, &jsv)
 	//util.CheckError(err)
-	//jvData, isOK = jsv["config"].([]db_types{})
+	//jvData, isOK = jsv["config"].([]dbtypes{})
 	//if !isOK {
 	//	util.CheckError(errors.New("fish_res's config is not existed or is not array"))
 	//}
 	//for _, v := range jvData {
-	//	p, isOK := v.(map[string]db_types{})
+	//	p, isOK := v.(map[string]dbtypes{})
 	//	if !isOK {
 	//		util.CheckError(errors.New("fish_res's child of config is not object"))
 	//	}
