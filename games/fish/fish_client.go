@@ -138,7 +138,7 @@ func (c *FClient)ProcessProtocols(p *protocols.Protocol) bool {
 	case protocols.PoseidonStatusCode:
 		return c.processPoseidonStatus(p)
 	case protocols.HitPoseidonCode:
-		return c.processPoseidonStatus(p)
+		return c.processHitPoseidon(p)
 	case protocols.SwitchCaliberCode:
 		return c.processSwitchCaliber(p)
 	}
@@ -540,6 +540,7 @@ func (c *FClient) processHitPoseidon(p *protocols.Protocol) bool {
 	var s2cHitPoseidon protocols.S2CHitPoseidon
 	s2cHitPoseidon.Parse(p)
 	c.gameCurrency = uint64(s2cHitPoseidon.Currency)
+	log.Printf("client index=%d, pid=%d hit poseidon, current money[%d]\n", c.Index, c.PtData.PID, c.gameCurrency)
 	return true
 }
 

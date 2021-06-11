@@ -149,6 +149,7 @@ type PtSeat struct {
 	CharID    uint32
 	Figure    string
 	Nick      string
+	VIP		  uint8
 	Currency  float64
 	LV        uint8
 	SeatID    uint8
@@ -176,6 +177,7 @@ func (p *S2CSeatsInfo) Parse(pb *Protocol) {
 		util.CheckError(err)
 		player.Nick, err = pb.GetStringUint8()
 		util.CheckError(err)
+		util.CheckError(pb.GetNumber(&player.VIP))
 		util.CheckError(pb.GetNumber(&player.Currency))
 		util.CheckError(pb.GetNumber(&player.LV))
 		util.CheckError(pb.GetNumber(&player.SeatID))
@@ -421,10 +423,13 @@ type S2CRedPacketInfo struct {
 }
 
 func (p *S2CRedPacketInfo) Parse(pb *Protocol) {
-	Info, err := pb.GetStringUint16()
+	info, err := pb.GetStringUint16()
 	util.CheckError(err)
+	if len(info) == 0 {
+		return
+	}
 	jv := make(map[string]interface{})
-	err = json.Unmarshal([]byte(Info), &jv)
+	err = json.Unmarshal([]byte(info), &jv)
 	util.CheckError(err)
 	p.Chip = uint64(jv["chipin"].(float64))
 	p.IsNewPlayer = uint8(jv["np"].(float64)) == 1
@@ -475,7 +480,7 @@ type S2CHitPoseidon struct {
 }
 
 func (p *S2CHitPoseidon) Parse(pb *Protocol) {
-	util.CheckError(pb.GetNumber(&p))
+	util.CheckError(pb.GetNumber(p))
 }
 
 type C2SSwitchCaliber struct {

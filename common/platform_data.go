@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 )
 
 type PlatformData struct {
@@ -22,8 +23,14 @@ func GetPlatformUserData() []*PlatformData {
 	if 0 == cfg.RobotNum {
 		return nil
 	}
-	sUrl := fmt.Sprintf("%s?start=%d&end=%d&vaild=1",
-		cfg.RobotAddr, cfg.RobotStart, cfg.RobotStart + cfg.RobotNum - 1)
+	var sUrl string
+	if strings.Index(cfg.RobotAddr, "?") != -1 {
+		sUrl = fmt.Sprintf("%s&start=%d&end=%d&vaild=1",
+			cfg.RobotAddr, cfg.RobotStart, cfg.RobotStart + cfg.RobotNum - 1)
+	} else {
+		sUrl = fmt.Sprintf("%s?start=%d&end=%d&vaild=1",
+			cfg.RobotAddr, cfg.RobotStart, cfg.RobotStart + cfg.RobotNum - 1)
+	}
 	resp, err := http.Get(sUrl)
 	util.CheckError(err)
 	body, err := ioutil.ReadAll(resp.Body)

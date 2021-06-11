@@ -10,3 +10,7 @@ const (
 const (
 	ItemCoin = 1000
 )
+
+const (
+	MySQL = 1 + iota
+)

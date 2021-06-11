@@ -1,0 +1,24 @@
+package mydb
+
+import (
+	"context"
+	"github/go-robot/global"
+	_interface "github/go-robot/mydb/db_types"
+	"github/go-robot/mydb/mymysql"
+)
+
+type MyDB interface {
+	Query(sqlFmt string, args ...interface{}) [] _interface.DBRow
+	Execute(sqlFmt string, args ...interface{}) (affectRows int64, lastInsertID int64)
+}
+
+func NewDB(ctx context.Context, driver uint, acc string, pwd string, dbName string, addr string, port uint) MyDB {
+	switch driver {
+	case global.MySQL:
+		db := new(mymysql.MySQL)
+		db.Open(ctx, acc, pwd, dbName, addr, port)
+		return db
+	}
+	return nil
+}
+

@@ -56,6 +56,8 @@ func main() {
 		d := myNet.NewConnect(cfg.NetProtocol, serverAddr)
 		// 创建客户端
 		c := games.NewClient(cfg.GameID, uint(i), user, d)
+		// 设置数据
+		games.SetRobotTestData(ctx, cfg.GameID, user.PID)
 		// 开工
 		common.DoWork(ctx, &wg, c, d)
 	}
