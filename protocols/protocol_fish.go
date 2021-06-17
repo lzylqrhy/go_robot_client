@@ -22,6 +22,7 @@ const (
 	SyncFishBoom        = 0x30D  // 同步鱼潮
 	GenerateFish        = 0x30E  // 生成鱼
 	TransmitCode        = 0x318  // 转发行为
+	LaunchMissileCode		= 0x319	 // 发射导弹
 	PoseidonStatusCode  = 0x010C // 波塞冬状态
 	HitPoseidonCode    = 0x010B  // 命中波塞冬
 )
@@ -501,5 +502,31 @@ type S2CSwitchCaliber struct {
 }
 
 func (p *S2CSwitchCaliber) Parse(pb *Protocol) {
+	util.CheckError(pb.GetNumber(p))
+}
+
+type C2SLaunchMissile struct {
+	MissileID  uint32
+	TargetFish uint32
+}
+
+func (p *C2SLaunchMissile) Bytes() []byte {
+	var pb Protocol
+	pb.SetCmd(LaunchMissileCode)
+	pb.AppendNumber(p)
+	return pb.Bytes()
+}
+
+type S2CLaunchMissile struct {
+	Result uint8
+	CharID uint32
+	ModelID uint32
+	TargetFish uint32
+	RewardModelID uint32
+	RewardNum uint32
+	Currency float64
+}
+
+func (p *S2CLaunchMissile) Parse(pb *Protocol) {
 	util.CheckError(pb.GetNumber(p))
 }

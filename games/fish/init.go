@@ -6,3 +6,5 @@ var ConfMgr = ConfigManager{}
 func init() {
 	ConfMgr.Load()
 }
+
+const BigFish = 3

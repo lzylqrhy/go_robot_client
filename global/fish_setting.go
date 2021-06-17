@@ -11,9 +11,12 @@ import (
 var FishSetting struct {
 	ServerAddr string
 	RoomID     uint
+	DoFire	bool
 	CaptureFishType map[uint32]struct{}
 	HitPoseidon uint
 	Caliber uint
+	LaunchMode uint
+	Missiles []uint
 }
 
 var FishTestDataSetting struct{
@@ -34,7 +37,21 @@ func getFishConfig(){
 	GameCommonSetting.Frame = getOptionUInt(section, "frame", 5)
 	FishSetting.ServerAddr = section.Key("server_addr").String()
 	FishSetting.RoomID = getOptionUInt(section, "room_id", 0)
+	// 开火
+	getFireSetting(section)
+	// 波塞冬
+	FishSetting.HitPoseidon = getOptionUInt(section, "hit_poseidon", 0)
+	// 发射导弹
+	getMissileSetting(section)
+	// db
+	getFishDBSetting(conf, "db_user", &GameCommonSetting.UserDB)
+	getFishDBSetting(conf, "db_data", &GameCommonSetting.DataDB)
+	// data
+	getFishInitData(conf)
+}
 
+func getFireSetting(section *ini.Section)  {
+	FishSetting.DoFire = getOptionUInt(section, "do_fire", 0) == 1
 	FishSetting.CaptureFishType = make(map[uint32]struct{})
 	if section.HasKey("capturing_fish_type") {
 		tempValue, err := section.Key("capturing_fish_type").StrictInt64s(",")
@@ -44,15 +61,26 @@ func getFishConfig(){
 			FishSetting.CaptureFishType[uint32(v)] = empty
 		}
 	}
-
-	FishSetting.HitPoseidon = getOptionUInt(section, "hit_poseidon", 0)
 	FishSetting.Caliber = getOptionUInt(section, "caliber", 0)
+}
 
-	// db
-	getFishDBSetting(conf, "db_user", &GameCommonSetting.UserDB)
-	getFishDBSetting(conf, "db_data", &GameCommonSetting.DataDB)
-	// data
-	getFishInitData(conf)
+func getMissileSetting(section *ini.Section) {
+	FishSetting.LaunchMode = getOptionUInt(section, "launch_mode", 0)
+	FishSetting.Missiles = make([]uint, 0)
+	missileStr := section.Key("missile").String()
+	if FishSetting.LaunchMode > 0 {
+		temp := strings.Split(missileStr, ",")
+		for _, ids := range temp {
+			if id, err := strconv.Atoi(ids); err == nil {
+				FishSetting.Missiles = append(FishSetting.Missiles, uint(id))
+			}
+		}
+		if len(FishSetting.Missiles) == 0 {
+			FishSetting.Missiles = append(FishSetting.Missiles, ItemFishBlackMissile, ItemFishBronzeMissile,
+				ItemFishSilverMissile, ItemFishGoldMissile, ItemFishPlatinumMissile, ItemFishKingMissile)
+			log.Println("current setting is launching all of missiles")
+		}
+	}
 }
 
 func getFishDBSetting(conf *ini.File, secKey string, setting *DBSetting)  {

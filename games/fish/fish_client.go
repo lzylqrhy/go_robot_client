@@ -63,6 +63,8 @@ func (c *FClient)Update() {
 	c.cleanBulletCache()
 	// 开火
 	c.fire()
+	// 发射导弹
+	c.launchMissile()
 }
 
 func (c *FClient) cleanBulletCache() {
@@ -92,11 +94,11 @@ func (c *FClient) cleanBulletCache() {
 func (c *FClient)OnConnected()  {
 	var ping protocols.C2SSyncTime
 	c.SendPacket(ping.Bytes())
-	log.Printf("client index=%d connected\n", c.Index)
+	log.Printf("client index=%d, pid=%d connected\n", c.Index, c.PtData.PID)
 }
 
 func (c *FClient)OnDisconnected()  {
-	log.Printf("client index=%d disconnected\n", c.Index)
+	log.Printf("client index=%d, pid=%d disconnected\n", c.Index, c.PtData.PID)
 	c.isWork = false
 }
 
@@ -141,6 +143,8 @@ func (c *FClient)ProcessProtocols(p *protocols.Protocol) bool {
 		return c.processHitPoseidon(p)
 	case protocols.SwitchCaliberCode:
 		return c.processSwitchCaliber(p)
+	case protocols.LaunchMissileCode:
+		return c.processLaunchMissile(p)
 	}
 	log.Printf("cmd:0x%04x don't process\n", p.Head.Cmd)
 	return true
@@ -316,13 +320,16 @@ func (c *FClient) processBulletList(p *protocols.Protocol) bool {
 		//}
 	}
 	c.isWork = true
-	log.Println("----------------------------c.getInfo cost", time.Now().UnixNano() / 1e6 - c.getInfoTime)
+	//log.Println("----------------------------c.getInfo cost", time.Now().UnixNano() / 1e6 - c.getInfoTime)
 	return true
 }
 
 const CostWarning = 0
 
 func (c *FClient) fire() {
+	if !global.FishSetting.DoFire {
+		return
+	}
 	// 判断钱是否足够
 	if c.gameCurrency < uint64(c.caliber) {
 		log.Printf("client index=%d charid=%d has no enough coin, need=%d, cur=%d, will exit \n", c.Index, c.charID, c.caliber, c.gameCurrency)
@@ -356,14 +363,14 @@ func (c *FClient) processFire(p *protocols.Protocol) bool {
 	}
 	costTime := (time.Now().UnixNano() - c.fireTime[s2cFire.OriginID]) / 1e6
 	if costTime > CostWarning {
-		log.Printf("-------------------------------client index=%d, pid=%d fire cost time %d\n", c.Index, c.PtData.PID, costTime)
+		log.Printf("------client index=%d, pid=%d fire cost time %d\n", c.Index, c.PtData.PID, costTime)
 	}
 	delete(c.fireTime, s2cFire.OriginID)
 	if 0 != s2cFire.Result {
 		log.Printf("client index=%d, pid=%d fire failed, result=%d \n", c.Index, c.PtData.PID, s2cFire.Result)
 		return true
 	}
-	//log.Printf("client index=%d, pid=%d fire successfully\n", c.Index, c.PtData.PID)
+	log.Printf("client index=%d, pid=%d fire successfully\n", c.Index, c.PtData.PID)
 	// 更新游戏币
 	c.gameCurrency = uint64(s2cFire.Currency)
 
@@ -406,7 +413,7 @@ func (c *FClient) processFire(p *protocols.Protocol) bool {
 
 func (c *FClient) getOneFish() uint32 {
 	if 0 == len(c.pond.mapFish) {
-		log.Printf("---------------------------------client index=%d, pid=%d has no any fish\n", c.Index, c.PtData.PID)
+		log.Printf("--------client index=%d, pid=%d has no any fish\n", c.Index, c.PtData.PID)
 		return 0
 	}
 	fishShow := make([]uint32, 0, 32) // 可绘制出来的鱼
@@ -420,17 +427,17 @@ func (c *FClient) getOneFish() uint32 {
 				if _, isExisting := global.FishSetting.CaptureFishType[t]; !isExisting {
 					continue
 				}
-				log.Printf("---------------------------------client index=%d, pid=%d can capture fish=%d, type=%d\n", c.Index, c.PtData.PID, k, t)
+				//log.Printf("--------client index=%d, pid=%d can capture fish=%d, type=%d\n", c.Index, c.PtData.PID, k, t)
 			}
 			fishShow = append(fishShow, k)
 		}
 	}
 	count := len(fishShow)
 	if 0 == count {
-		log.Printf("---------------------------------client index=%d, pid=%d has no target fish, all fish count=%d, fish types is %v\n", c.Index, c.PtData.PID, len(c.pond.mapFish), mapFishType)
+		log.Printf("--------client index=%d, pid=%d has no target fish, all fish count=%d, fish types is %v\n", c.Index, c.PtData.PID, len(c.pond.mapFish), mapFishType)
 		return 0
 	}
-	log.Printf("---------------------------------client index=%d, pid=%d target fish count=%d\n", c.Index, c.PtData.PID, count)
+	log.Printf("--------client index=%d, pid=%d target fish count=%d\n", c.Index, c.PtData.PID, count)
 	index := rand.Int31n(int32(count))
 	return fishShow[index]
 }
@@ -448,7 +455,7 @@ func (c *FClient) processHitFish(p *protocols.Protocol) bool {
 		c.gameCurrency = uint64(s2cHit.Currency)
 		costTime := (time.Now().UnixNano() - c.hitTime[s2cHit.Serial]) / 1e6
 		if costTime > CostWarning {
-			log.Printf("-------------------------------client index=%d, pid=%d hit cost time %d\n", c.Index, c.PtData.PID, costTime)
+			log.Printf("------client index=%d, pid=%d hit cost time %d\n", c.Index, c.PtData.PID, costTime)
 		}
 		delete(c.hitTime, s2cHit.Serial)
 	}
@@ -539,8 +546,10 @@ func (c *FClient) processPoseidonStatus(p *protocols.Protocol) bool {
 func (c *FClient) processHitPoseidon(p *protocols.Protocol) bool {
 	var s2cHitPoseidon protocols.S2CHitPoseidon
 	s2cHitPoseidon.Parse(p)
-	c.gameCurrency = uint64(s2cHitPoseidon.Currency)
-	log.Printf("client index=%d, pid=%d hit poseidon, current money[%d]\n", c.Index, c.PtData.PID, c.gameCurrency)
+	if s2cHitPoseidon.CharID == c.charID {
+		c.gameCurrency = uint64(s2cHitPoseidon.Currency)
+		log.Printf("client index=%d, pid=%d hit poseidon, current money[%d]\n", c.Index, c.PtData.PID, c.gameCurrency)
+	}
 	return true
 }
 
@@ -556,6 +565,87 @@ func (c *FClient) processSwitchCaliber(p *protocols.Protocol) bool {
 	s2cSwitchCaliber.Parse(p)
 	if s2cSwitchCaliber.CharID == c.charID {
 		c.caliber = s2cSwitchCaliber.Caliber
+	}
+	return true
+}
+
+func (c *FClient) launchMissile() {
+	if global.FishSetting.LaunchMode == 0 {
+		return
+	}
+	modelID := uint(0)
+	for _, id := range global.FishSetting.Missiles {
+		if v, isOK := c.Items[uint32(id)]; isOK {
+			if v > 0 {
+				modelID = id
+				c.Items[uint32(id)]--
+				break
+			}
+		}
+	}
+	if modelID == 0 {
+		return
+	}
+	// 找一条黄金鱼
+	fishID := c.getOneSpecifiedFish(BigFish)
+	if fishID > 0 {
+		c2sLaunch := protocols.C2SLaunchMissile{MissileID: uint32(modelID), TargetFish: fishID}
+		c.SendPacket(c2sLaunch.Bytes())
+		log.Printf("------client index=%d, pid=%d has no any fish\n", c.Index, c.PtData.PID)
+	}
+}
+
+func (c *FClient) getOneSpecifiedFish(dstType uint32) uint32 {
+	if 0 == len(c.pond.mapFish) {
+		log.Printf("------client index=%d, pid=%d has no any fish\n", c.Index, c.PtData.PID)
+		return 0
+	}
+	fishShow := make([]uint32, 0, 4) // 可绘制出来的鱼
+	mapFishType := make(map[uint32]uint32) // 当前鱼池鱼类型
+	for k, v := range c.pond.mapFish {
+		if v.BornTime <= float64(c.getServerTime()) {
+			t := ConfMgr.getFishTypeByID(v.KindID)
+			mapFishType[t]++
+			if t != dstType {
+				continue
+			}
+			fishShow = append(fishShow, k)
+		}
+	}
+	count := len(fishShow)
+	if 0 == count {
+		log.Printf("------client index=%d, pid=%d has no target fish, specified type %d, all fish count=%d, types is %v\n",
+			c.Index, c.PtData.PID, dstType, len(c.pond.mapFish), mapFishType)
+		return 0
+	}
+	//log.Printf("------client index=%d, pid=%d target fish count=%d\n", c.Index, c.PtData.PID, count)
+	index := rand.Int31n(int32(count))
+	return fishShow[index]
+}
+
+func (c *FClient) processLaunchMissile(p *protocols.Protocol) bool {
+	var s2cMissile protocols.S2CLaunchMissile
+	s2cMissile.Parse(p)
+	// 判断角色, 不是自己，直接返回
+	if s2cMissile.CharID != c.charID {
+		return true
+	}
+	// 失败，返回
+	if s2cMissile.Result > 0 {
+		log.Printf("client index=%d, pid=%d launch missile failed, result=%d\n", c.Index, c.PtData.PID, s2cMissile.Result)
+		return true
+	}
+	// 奖励
+	//c.Items[s2cMissile.ModelID]--
+	c.Items[s2cMissile.RewardModelID] += uint64(s2cMissile.RewardNum)
+	c.gameCurrency = uint64(s2cMissile.Currency)
+	log.Printf("client index=%d, pid=%d launch missile successfully, model id=%d, left=%d, current money=%d\n",
+		c.Index, c.PtData.PID, s2cMissile.ModelID, c.Items[s2cMissile.ModelID], c.gameCurrency)
+	if global.FishSetting.LaunchMode == 2 && 0 == c.Items[s2cMissile.ModelID] {
+		if 0 == c.Items[s2cMissile.ModelID] {
+			c.Dialer.Disconnect()
+			c.isWork = false
+		}
 	}
 	return true
 }

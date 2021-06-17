@@ -48,7 +48,7 @@ func SetRobotTestData(ctx context.Context, pID uint32) bool {
 		it := dataDB.Query("select serial from game_items where container=? and model_id=?", charID, id)
 		if len(it) == 0 {
 			// insert
-			afRows, _ := dataDB.Execute("insert into game_items set container=?, container_type=1, group_id=1, model_id=?, num=?",
+			afRows, _ := dataDB.Execute("insert into game_items set status=1, container=?, container_type=1, group_id=1, model_id=?, num=?",
 				charID, id, num)
 			if afRows == 0 {
 				log.Printf("set item failed: mode_id=%d, num=%d", id, num)
