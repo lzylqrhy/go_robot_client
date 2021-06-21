@@ -1,7 +1,6 @@
 package games
 
 import (
-	"context"
 	"github/go-robot/common"
 	"github/go-robot/games/aladdin"
 	"github/go-robot/games/fish"
@@ -11,8 +10,8 @@ import (
 	"log"
 )
 
-func NewClient(gameID uint, index uint, pd *common.PlatformData, dialer myNet.MyDialer) common.Client {
-	switch gameID {
+func NewClient(index uint, pd *common.PlatformData, dialer myNet.MyDialer) common.Client {
+	switch global.MainSetting.GameID {
 	case global.FishGame:
 		return fish.NewClient(index, pd, dialer)
 	case global.FruitGame:
@@ -24,17 +23,12 @@ func NewClient(gameID uint, index uint, pd *common.PlatformData, dialer myNet.My
 	return nil
 }
 
-func SetRobotTestData(ctx context.Context, gameID uint, pID uint32)  {
-	var isOK bool
-	switch gameID {
+func SetRobotTestData(pds []*common.PlatformData)  {
+	switch global.MainSetting.GameID {
 	case global.FishGame:
-		isOK = fish.SetRobotTestData(ctx, pID)
+		fish.RunTestData(pds)
 	default:
-		log.Println("have no test data")
+		log.Printf("game %d have no test data", global.MainSetting.GameID)
 	}
-	if !isOK {
-		log.Fatalln("set robot data failed")
-	} else {
-		log.Println("set robot data successfully")
-	}
+	log.Printf("game %d set robot data completed", global.MainSetting.GameID)
 }

@@ -35,7 +35,9 @@ func main() {
 	userList := common.GetPlatformUserData()
 	var wg sync.WaitGroup
 	ctx, cancel := context.WithCancel(context.Background())
-
+	// 设置机器人数据
+	games.SetRobotTestData(userList)
+	// 启动机器人
 	for i, user := range userList {
 		// 连接服务器
 		var serverAddr string
@@ -55,9 +57,7 @@ func main() {
 		}
 		d := myNet.NewConnect(cfg.NetProtocol, serverAddr)
 		// 创建客户端
-		c := games.NewClient(cfg.GameID, uint(i), user, d)
-		// 设置数据
-		games.SetRobotTestData(ctx, cfg.GameID, user.PID)
+		c := games.NewClient(uint(i), user, d)
 		// 开工
 		common.DoWork(ctx, &wg, c, d)
 	}
