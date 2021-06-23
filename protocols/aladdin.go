@@ -16,7 +16,7 @@ type S2CAladdinPlayerInfo struct {
 	PID        uint32
 	RegTime    uint32
 	Gender     uint8
-	A          uint32
+	A          uint32	// 无关紧要的数据就不命名了
 	LV         uint8
 	B          uint8
 	C          uint32
