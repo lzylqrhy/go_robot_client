@@ -1,7 +1,8 @@
 package common
 
 import (
-	myNet "github/go-robot/net"
+	"github/go-robot/core/mynet"
+	"github/go-robot/core/protocol"
 	"github/go-robot/protocols"
 	"log"
 	"strings"
@@ -9,14 +10,14 @@ import (
 
 // 客户端基类
 type ClientBase struct {
-	Index     uint32	// 机器人索引
-	PtData    *PlatformData	// 平台数据
-	SevTime   uint64	// 服务端时间
-	LocalTime uint64	// 本地时间
-	Dialer    myNet.MyDialer	// 网络连接器
-	Items map[uint32]uint64	// 物品
-	IsWorking bool	// 是否在工作
-	RoomID	uint32
+	Index     uint32            // 机器人索引
+	PtData    *PlatformData     // 平台数据
+	SevTime   uint64            // 服务端时间
+	LocalTime uint64            // 本地时间
+	Dialer    mynet.MyDialer    // 网络连接器
+	Items     map[uint32]uint64 // 物品
+	IsWorking bool              // 是否在工作
+	RoomID    uint32
 }
 
 func (c *ClientBase) SendPacket(msg []byte)  {
@@ -24,7 +25,7 @@ func (c *ClientBase) SendPacket(msg []byte)  {
 }
 
 // 处理公共协议
-func (c *ClientBase)ProcessCommonProtocols(p *protocols.Protocol) (bool, bool) {
+func (c *ClientBase)ProcessCommonProtocols(p *protocol.Protocol) (bool, bool) {
 	switch p.Head.Cmd {
 	case protocols.SyncTimeCode:
 		return true, c.processSyncTime(p)
@@ -34,7 +35,7 @@ func (c *ClientBase)ProcessCommonProtocols(p *protocols.Protocol) (bool, bool) {
 	return false, false
 }
 
-func (c *ClientBase) processSyncTime(p *protocols.Protocol) bool {
+func (c *ClientBase) processSyncTime(p *protocol.Protocol) bool {
 	s2cSync := new(protocols.S2CSyncTime)
 	s2cSync.Parse(p)
 	log.Println(s2cSync)
@@ -50,7 +51,7 @@ func (c *ClientBase) processSyncTime(p *protocols.Protocol) bool {
 	return true
 }
 
-func (c *ClientBase) processOpenPackage(p *protocols.Protocol) bool {
+func (c *ClientBase) processOpenPackage(p *protocol.Protocol) bool {
 	var s2cPackage protocols.S2COpenPackage
 	s2cPackage.Parse(p)
 	if c.Items == nil {

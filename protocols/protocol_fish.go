@@ -2,6 +2,7 @@ package protocols
 
 import (
 	"encoding/json"
+	"github/go-robot/core/protocol"
 	"github/go-robot/util"
 )
 
@@ -36,7 +37,7 @@ type S2CPlayerInfo struct {
 	UpgradeExp uint32
 }
 
-func (p *S2CPlayerInfo) Parse(pb *Protocol) {
+func (p *S2CPlayerInfo) Parse(pb *protocol.Protocol) {
 	var err error
 	util.CheckError(pb.GetNumber(&p.CharID))
 	p.Figure, err = pb.GetStringUint8()
@@ -52,7 +53,7 @@ type S2CEnterHallOrRoom struct {
 	RoomID uint32
 }
 
-func (p *S2CEnterHallOrRoom) Parse(pb *Protocol) {
+func (p *S2CEnterHallOrRoom) Parse(pb *protocol.Protocol) {
 	err := pb.GetNumber(p)
 	util.CheckError(err)
 }
@@ -72,7 +73,7 @@ type S2CRoomList struct {
 	Rooms []Room
 }
 
-func (p *S2CRoomList) Parse(pb *Protocol) {
+func (p *S2CRoomList) Parse(pb *protocol.Protocol) {
 	var count uint8
 	util.CheckError(pb.GetNumber(&count))
 	p.Rooms = make([]Room, count)
@@ -95,7 +96,7 @@ type C2SFishEnterRoom struct {
 }
 
 func (p *C2SFishEnterRoom) Bytes() []byte {
-	var pb Protocol
+	var pb protocol.Protocol
 	pb.SetCmd(FishEnterRoomCode)
 	pb.AppendNumber(p.RoomID)
 	pb.AppendNumber(p.ChannelID)
@@ -107,7 +108,7 @@ type S2CFishEnterRoom struct {
 	Result uint8
 }
 
-func (p *S2CFishEnterRoom) Parse(pb *Protocol) {
+func (p *S2CFishEnterRoom) Parse(pb *protocol.Protocol) {
 	err := pb.GetNumber(p)
 	util.CheckError(err)
 }
@@ -117,7 +118,7 @@ type C2SGetSceneInfo struct {
 }
 
 func (p *C2SGetSceneInfo) Bytes() []byte {
-	var pb Protocol
+	var pb protocol.Protocol
 	pb.SetCmd(SceneInfoCode)
 	return pb.Bytes()
 }
@@ -134,7 +135,7 @@ type S2CGetSceneInfo struct {
 	Buffs []PtBuff
 }
 
-func (p *S2CGetSceneInfo) Parse(pb *Protocol) {
+func (p *S2CGetSceneInfo) Parse(pb *protocol.Protocol) {
 	util.CheckError(pb.GetNumber(&p.BGImgID))
 	util.CheckError(pb.GetNumber(&p.ServerTime))
 	var count uint8
@@ -165,7 +166,7 @@ type S2CSeatsInfo struct {
 	Players []PtSeat
 }
 
-func (p *S2CSeatsInfo) Parse(pb *Protocol) {
+func (p *S2CSeatsInfo) Parse(pb *protocol.Protocol) {
 	var seatCount uint8
 	util.CheckError(pb.GetNumber(&seatCount))
 	p.Players = make([]PtSeat, seatCount)
@@ -211,7 +212,7 @@ type S2CFishList struct {
 	FishList []PtFish
 }
 
-func (p *S2CFishList) Parse(pb *Protocol) {
+func (p *S2CFishList) Parse(pb *protocol.Protocol) {
 	var count uint16
 	util.CheckError(pb.GetNumber(&count))
 	p.FishList = make([]PtFish, count)
@@ -235,7 +236,7 @@ type S2CBulletList struct {
 	BulletList []PtBullet
 }
 
-func (p *S2CBulletList) Parse(pb *Protocol) {
+func (p *S2CBulletList) Parse(pb *protocol.Protocol) {
 	var count uint8
 	util.CheckError(pb.GetNumber(&count))
 	p.BulletList = make([]PtBullet, count)
@@ -265,7 +266,7 @@ type C2SFire struct {
 }
 
 func (p *C2SFire) Bytes() []byte {
-	var pb Protocol
+	var pb protocol.Protocol
 	pb.SetCmd(FireCode)
 	pb.AppendNumber(p)
 	return pb.Bytes()
@@ -285,7 +286,7 @@ type S2CFire struct {
 	Buffs    []PtBuff
 }
 
-func (p *S2CFire) Parse(pb *Protocol) {
+func (p *S2CFire) Parse(pb *protocol.Protocol) {
 	util.CheckError(pb.GetNumber(&p.Result))
 	util.CheckError(pb.GetNumber(&p.Serial))
 	util.CheckError(pb.GetNumber(&p.OriginID))
@@ -312,7 +313,7 @@ type C2SHitFish struct {
 }
 
 func (p *C2SHitFish) Bytes() []byte {
-	var pb Protocol
+	var pb protocol.Protocol
 	pb.SetCmd(HitFishCode)
 	pb.AppendNumber(p)
 	return pb.Bytes()
@@ -341,7 +342,7 @@ type S2CHitFish struct {
 	ClientTime float64
 }
 
-func (p *S2CHitFish) Parse(pb *Protocol) {
+func (p *S2CHitFish) Parse(pb *protocol.Protocol) {
 	util.CheckError(pb.GetNumber(&p.CharID))
 	util.CheckError(pb.GetNumber(&p.SeatID))
 	util.CheckError(pb.GetNumber(&p.Serial))
@@ -371,7 +372,7 @@ type C2STransmitActivity struct {
 }
 
 func (p *C2STransmitActivity) Bytes() []byte {
-	var pb Protocol
+	var pb protocol.Protocol
 	pb.SetCmd(TransmitCode)
 	pb.AppendStringUint8(p.Activity)
 	return pb.Bytes()
@@ -382,7 +383,7 @@ type S2CSyncBoom struct {
 	LeftTime   uint32
 }
 
-func (p *S2CSyncBoom) Parse(pb *Protocol) {
+func (p *S2CSyncBoom) Parse(pb *protocol.Protocol) {
 	util.CheckError(pb.GetNumber(p))
 }
 
@@ -390,7 +391,7 @@ type S2CGenerateFish struct {
 	FishList []PtFish
 }
 
-func (p *S2CGenerateFish) Parse(pb *Protocol) {
+func (p *S2CGenerateFish) Parse(pb *protocol.Protocol) {
 	var count uint16
 	util.CheckError(pb.GetNumber(&count))
 	p.FishList = make([]PtFish, count)
@@ -412,7 +413,7 @@ type C2SDrawReadPacket struct {
 }
 
 func (p *C2SDrawReadPacket) Bytes() []byte {
-	var pb Protocol
+	var pb protocol.Protocol
 	pb.SetCmd(DrawReadPacketCode)
 	pb.AppendNumber(p)
 	return pb.Bytes()
@@ -423,7 +424,7 @@ type S2CRedPacketInfo struct {
 	IsNewPlayer bool
 }
 
-func (p *S2CRedPacketInfo) Parse(pb *Protocol) {
+func (p *S2CRedPacketInfo) Parse(pb *protocol.Protocol) {
 	info, err := pb.GetStringUint16()
 	util.CheckError(err)
 	if len(info) == 0 {
@@ -445,7 +446,7 @@ type S2CPoseidonStatus struct {
 	PlayAnimation     uint8
 }
 
-func (p *S2CPoseidonStatus) Parse(pb *Protocol) {
+func (p *S2CPoseidonStatus) Parse(pb *protocol.Protocol) {
 	var err error
 	util.CheckError(pb.GetNumber(&p.Status))
 	util.CheckError(pb.GetNumber(&p.CurrLoopEndTime))
@@ -464,7 +465,7 @@ type C2SHitPoseidon struct {
 }
 
 func (p *C2SHitPoseidon) Bytes() []byte {
-	var pb Protocol
+	var pb protocol.Protocol
 	pb.SetCmd(HitPoseidonCode)
 	pb.AppendNumber(p)
 	return pb.Bytes()
@@ -480,7 +481,7 @@ type S2CHitPoseidon struct {
 	LocalTime float64
 }
 
-func (p *S2CHitPoseidon) Parse(pb *Protocol) {
+func (p *S2CHitPoseidon) Parse(pb *protocol.Protocol) {
 	util.CheckError(pb.GetNumber(p))
 }
 
@@ -489,7 +490,7 @@ type C2SSwitchCaliber struct {
 }
 
 func (p *C2SSwitchCaliber) Bytes() []byte {
-	var pb Protocol
+	var pb protocol.Protocol
 	pb.SetCmd(SwitchCaliberCode)
 	pb.AppendNumber(p)
 	return pb.Bytes()
@@ -501,7 +502,7 @@ type S2CSwitchCaliber struct {
 	Caliber uint32
 }
 
-func (p *S2CSwitchCaliber) Parse(pb *Protocol) {
+func (p *S2CSwitchCaliber) Parse(pb *protocol.Protocol) {
 	util.CheckError(pb.GetNumber(p))
 }
 
@@ -511,7 +512,7 @@ type C2SLaunchMissile struct {
 }
 
 func (p *C2SLaunchMissile) Bytes() []byte {
-	var pb Protocol
+	var pb protocol.Protocol
 	pb.SetCmd(LaunchMissileCode)
 	pb.AppendNumber(p)
 	return pb.Bytes()
@@ -527,6 +528,6 @@ type S2CLaunchMissile struct {
 	Currency float64
 }
 
-func (p *S2CLaunchMissile) Parse(pb *Protocol) {
+func (p *S2CLaunchMissile) Parse(pb *protocol.Protocol) {
 	util.CheckError(pb.GetNumber(p))
 }

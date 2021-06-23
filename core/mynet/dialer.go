@@ -1,8 +1,8 @@
-package net
+package mynet
 
 import (
 	"context"
-	"github/go-robot/protocols"
+	"github/go-robot/core/protocol"
 	"log"
 	"sync"
 )
@@ -10,7 +10,7 @@ import (
 type MyDialer interface {
 	Disconnect()
 	SendPacket(data []byte) bool
-	ReadPacket() <-chan *protocols.Protocol
+	ReadPacket() <-chan *protocol.Protocol
 	Run(ctx context.Context, wg *sync.WaitGroup) bool
 }
 
@@ -26,6 +26,6 @@ func NewConnect(protocol, sAddr string) MyDialer {
 	case TCP:
 		return NewTCPConnect(sAddr)
 	}
-	log.Panic("net protocol is not undefined")
+	log.Panic("net protocol is undefined")
 	return nil
 }

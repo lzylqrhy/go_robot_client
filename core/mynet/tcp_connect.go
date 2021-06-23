@@ -1,10 +1,10 @@
-package net
+package mynet
 
 import (
 	"bytes"
 	"context"
 	"encoding/binary"
-	"github/go-robot/protocols"
+	"github/go-robot/core/protocol"
 	"io"
 	"log"
 	"net"
@@ -13,7 +13,7 @@ import (
 
 type TCPDialer struct {
 	conn net.Conn
-	chRead chan *protocols.Protocol
+	chRead chan *protocol.Protocol
 	chWrite chan []byte
 	sAddr string
 	ctx context.Context
@@ -22,7 +22,7 @@ type TCPDialer struct {
 func NewTCPConnect(sAddr string) MyDialer {
 	d := new(TCPDialer)
 	d.sAddr = sAddr
-	d.chRead = make(chan *protocols.Protocol, 100)
+	d.chRead = make(chan *protocol.Protocol, 100)
 	d.chWrite = make(chan []byte, 100)
 	return d
 }
@@ -81,7 +81,7 @@ func (d *TCPDialer) SendPacket(data []byte) bool {
 	return true
 }
 
-func (d *TCPDialer) ReadPacket() <-chan *protocols.Protocol {
+func (d *TCPDialer) ReadPacket() <-chan *protocol.Protocol {
 	return d.chRead
 }
 
@@ -94,7 +94,7 @@ func (d *TCPDialer) Run(ctx context.Context, wg *sync.WaitGroup) bool {
 	go func() {
 		defer wg.Done()
 		// 连接成功
-		var pd protocols.Protocol
+		var pd protocol.Protocol
 		pd.Head.Cmd = 0
 		pd.Head.Len = 0
 		d.chRead <- &pd
@@ -103,7 +103,7 @@ func (d *TCPDialer) Run(ctx context.Context, wg *sync.WaitGroup) bool {
 			defer func() {
 				d.close()
 				// 连接断开
-				var pd protocols.Protocol
+				var pd protocol.Protocol
 				pd.Head.Cmd = 0
 				pd.Head.Len = 1
 				d.chRead <- &pd
@@ -147,21 +147,21 @@ func (d *TCPDialer) Run(ctx context.Context, wg *sync.WaitGroup) bool {
 }
 
 func (d *TCPDialer) read() {
-	headBuff := make([]byte, protocols.HeadSize)
+	headBuff := make([]byte, protocol.HeadSize)
 	for {
 		if _, err := io.ReadFull(d.conn, headBuff); err != nil {
 			log.Println("read protocol header failed, error is ", err)
 			break
 		}
-		ptData := new(protocols.Protocol)
+		ptData := new(protocol.Protocol)
 		r := bytes.NewReader(headBuff)
 		err := binary.Read(r, binary.LittleEndian, &ptData.Head)
 		if err != nil {
 			log.Println("binary.read failed, error is ", err)
 			break
 		}
-		if ptData.Head.Len > protocols.HeadSize {
-			leftBuff := make([]byte, ptData.Head.Len-protocols.HeadSize)
+		if ptData.Head.Len > protocol.HeadSize {
+			leftBuff := make([]byte, ptData.Head.Len-protocol.HeadSize)
 			if _, err := io.ReadFull(d.conn, leftBuff); err != nil {
 				log.Println("read protocol content failed, error is ", err)
 				break

@@ -5,23 +5,26 @@ import (
 	"errors"
 	"fmt"
 	"github/go-robot/common"
+	"github/go-robot/core/mydb"
 	"github/go-robot/global"
-	"github/go-robot/mydb"
+	"github/go-robot/global/ini"
 	"log"
 	"math/rand"
+	"runtime"
 	"sync"
 	"sync/atomic"
 	"time"
 )
 
+// 多协程设置数据
 func RunTestData(pds []*common.PlatformData) {
 	uLen := len(pds)
 	if uLen == 0 {
 		return
 	}
-	num := 16
-	if uLen < 16 {
-		num = uLen / 2 + 1
+	num := runtime.NumCPU()
+	if uLen < num {
+		num = uLen
 	}
 	wg := sync.WaitGroup{}
 	ctx := context.Background()
@@ -49,6 +52,7 @@ func RunTestData(pds []*common.PlatformData) {
 	wg.Wait()
 }
 
+// 处理数据类
 type operateData struct {
 	userDB mydb.MyDB
 	dataDB mydb.MyDB
@@ -56,13 +60,13 @@ type operateData struct {
 
 func (o *operateData)Init(ctx context.Context) {
 	// db user
-	o.userDB = getDBObject(ctx, global.GameCommonSetting.UserDB)
+	o.userDB = getDBObject(ctx, ini.GameCommonSetting.UserDB)
 	if o.userDB == nil {
 		log.Fatalln("fish test data need valid user db setting, please check config")
 		return
 	}
 	// db data
-	o.dataDB = getDBObject(ctx, global.GameCommonSetting.DataDB)
+	o.dataDB = getDBObject(ctx, ini.GameCommonSetting.DataDB)
 	if o.dataDB == nil {
 		log.Fatalln("fish test data need valid data db setting, please check config")
 		return
@@ -71,8 +75,9 @@ func (o *operateData)Init(ctx context.Context) {
 
 func (o *operateData) SetTestData(pID uint32) bool {
 	// 获取角色ID
-	res := o.userDB.Query("select char_id from users where platform_id = ? and gz_id = ?", pID, global.MainSetting.GameZone)
+	res := o.userDB.Query("select char_id from users where platform_id = ? and gz_id = ?", pID, ini.MainSetting.GameZone)
 	if len(res) != 1 {
+		log.Printf("find char_id failed from users table : platform_id=%d, gz_id=%s", pID, ini.MainSetting.GameZone)
 		return false
 	}
 	charID := res[0]["char_id"].(int64)
@@ -85,11 +90,11 @@ func (o *operateData) SetTestData(pID uint32) bool {
 		}
 	}
 	// 设置物品
-	itemSetting := global.FishTestDataSetting.Items
+	itemSetting := ini.FishTestDataSetting.Items
 	if len(itemSetting) == 0 {
 		return false
 	}
-	for id, num := range global.FishTestDataSetting.Items {
+	for id, num := range ini.FishTestDataSetting.Items {
 		it := o.dataDB.Query("select serial from game_items where container=? and model_id=?", charID, id)
 		if len(it) == 0 {
 			// insert
@@ -104,11 +109,11 @@ func (o *operateData) SetTestData(pID uint32) bool {
 		o.dataDB.Execute("update game_items set num=? where serial=?", num, it[0]["serial"].(int64))
 	}
 	// 炮等级
-	o.dataDB.Execute("update game_chars set official=? where serial=?", global.FishTestDataSetting.CaliberLV, charID)
+	o.dataDB.Execute("update game_chars set official=? where serial=?", ini.FishTestDataSetting.CaliberLV, charID)
 	return true
 }
 
-func getDBObject(ctx context.Context, dbSetting global.DBSetting) mydb.MyDB {
+func getDBObject(ctx context.Context, dbSetting ini.DBSetting) mydb.MyDB {
 	if !dbSetting.IsUsable {
 		return nil
 	}
@@ -121,7 +126,7 @@ func getDBObject(ctx context.Context, dbSetting global.DBSetting) mydb.MyDB {
 
 func (o *operateData)getCharID(pID uint32) (charID int64, err error) {
 	// 获取角色ID
-	res := o.userDB.Query("select uid, nick, char_id from users where platform_id = ? and gz_id = ?", pID, global.MainSetting.GameZone)
+	res := o.userDB.Query("select uid, nick, char_id from users where platform_id = ? and gz_id = ?", pID, ini.MainSetting.GameZone)
 	if len(res) != 1 {
 		return 0, errors.New("don't find user in users table")
 	}

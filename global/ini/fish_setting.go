@@ -1,6 +1,7 @@
-package global
+package ini
 
 import (
+	"github/go-robot/global"
 	"github/go-robot/util"
 	"gopkg.in/ini.v1"
 	"log"
@@ -44,8 +45,8 @@ func getFishConfig(){
 	// 发射导弹
 	getMissileSetting(section)
 	// db
-	getFishDBSetting(conf, "db_user", &GameCommonSetting.UserDB)
-	getFishDBSetting(conf, "db_data", &GameCommonSetting.DataDB)
+	getDBSetting(conf, "db_user", &GameCommonSetting.UserDB)
+	getDBSetting(conf, "db_data", &GameCommonSetting.DataDB)
 	// data
 	getFishInitData(conf)
 }
@@ -76,25 +77,11 @@ func getMissileSetting(section *ini.Section) {
 			}
 		}
 		if len(FishSetting.Missiles) == 0 {
-			FishSetting.Missiles = append(FishSetting.Missiles, ItemFishBlackMissile, ItemFishBronzeMissile,
-				ItemFishSilverMissile, ItemFishGoldMissile, ItemFishPlatinumMissile, ItemFishKingMissile)
+			FishSetting.Missiles = append(FishSetting.Missiles, global.ItemFishBlackMissile, global.ItemFishBronzeMissile,
+				global.ItemFishSilverMissile, global.ItemFishGoldMissile, global.ItemFishPlatinumMissile, global.ItemFishKingMissile)
 			log.Println("current setting is launching all of missiles")
 		}
 	}
-}
-
-func getFishDBSetting(conf *ini.File, secKey string, setting *DBSetting)  {
-	section := conf.Section(secKey)
-	if section == nil {
-		log.Printf("%s setting is not existed in fish.ini", secKey)
-		return
-	}
-	setting.Account = section.Key("account").String()
-	setting.Password = section.Key("password").String()
-	setting.Database = section.Key("database").String()
-	setting.Address = section.Key("addr").String()
-	setting.Port = getOptionUInt(section,"port", 0)
-	setting.IsUsable = true
 }
 
 func getFishInitData(conf *ini.File)  {

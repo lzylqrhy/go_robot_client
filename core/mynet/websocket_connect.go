@@ -1,11 +1,11 @@
-package net
+package mynet
 
 import (
 	"bytes"
 	"context"
 	"encoding/binary"
 	"github.com/gorilla/websocket"
-	"github/go-robot/protocols"
+	"github/go-robot/core/protocol"
 	"io"
 	"log"
 	"net/url"
@@ -16,7 +16,7 @@ import (
 
 type WSDialer struct {
 	conn *websocket.Conn
-	chRead chan *protocols.Protocol
+	chRead chan *protocol.Protocol
 	chWrite chan []byte
 	sAddr string
 	ctx context.Context
@@ -26,7 +26,7 @@ func NewWSConnect(sAddr string) MyDialer {
 	d := new(WSDialer)
 	u := url.URL{Scheme: "ws", Host: sAddr}
 	d.sAddr = u.String()
-	d.chRead = make(chan *protocols.Protocol, 100)
+	d.chRead = make(chan *protocol.Protocol, 100)
 	d.chWrite = make(chan []byte, 100)
 	return d
 }
@@ -85,7 +85,7 @@ func (d *WSDialer) SendPacket(data []byte) bool {
 	return true
 }
 
-func (d *WSDialer) ReadPacket() <-chan *protocols.Protocol {
+func (d *WSDialer) ReadPacket() <-chan *protocol.Protocol {
 	return d.chRead
 }
 
@@ -98,7 +98,7 @@ func (d *WSDialer) Run(ctx context.Context, wg *sync.WaitGroup) bool {
 	go func() {
 		defer wg.Done()
 		// 连接成功
-		var pd protocols.Protocol
+		var pd protocol.Protocol
 		pd.Head.Cmd = 0
 		pd.Head.Len = 0
 		d.chRead <- &pd
@@ -107,7 +107,7 @@ func (d *WSDialer) Run(ctx context.Context, wg *sync.WaitGroup) bool {
 			defer func() {
 				d.close()
 				// 连接断开
-				var pd protocols.Protocol
+				var pd protocol.Protocol
 				pd.Head.Cmd = 0
 				pd.Head.Len = 1
 				d.chRead <- &pd
@@ -160,8 +160,8 @@ func (d *WSDialer) Run(ctx context.Context, wg *sync.WaitGroup) bool {
 
 func (d *WSDialer) read() {
 	// 读消息
-	var ptData *protocols.Protocol
-	headBuff := make([]byte, protocols.HeadSize)
+	var ptData *protocol.Protocol
+	headBuff := make([]byte, protocol.HeadSize)
 	leftCount := uint16(0)
 	for {
 		_, message, err := d.conn.ReadMessage()
@@ -187,31 +187,31 @@ func (d *WSDialer) read() {
 				if 0 == br.Len() {
 					break
 				}
-				if br.Len() + int(leftCount) < protocols.HeadSize {
+				if br.Len() + int(leftCount) < protocol.HeadSize {
 					n, err := br.Read(headBuff[leftCount:])
 					if err != nil {
 						log.Println("read head buff failed, error is ", err)
 						return
 					}
 					headBuff = headBuff[:leftCount+uint16(n)]
-					leftCount = protocols.HeadSize - (leftCount+uint16(n))
+					leftCount = protocol.HeadSize - (leftCount+uint16(n))
 					break
 				}
-				ptData = new(protocols.Protocol)
+				ptData = new(protocol.Protocol)
 				err = binary.Read(br, binary.LittleEndian, &ptData.Head)
 				if err != nil {
 					log.Println("binary.read failed, error is ", err)
 					return
 				}
-				if ptData.Head.Len > protocols.HeadSize {
+				if ptData.Head.Len > protocol.HeadSize {
 					if 0 == br.Len() {
-						leftCount = ptData.Head.Len - protocols.HeadSize
+						leftCount = ptData.Head.Len - protocol.HeadSize
 						break
 					}
-					leftBuff := make([]byte, ptData.Head.Len-protocols.HeadSize)
+					leftBuff := make([]byte, ptData.Head.Len-protocol.HeadSize)
 					if n, err := io.ReadFull(br, leftBuff); err != nil {
 						if err == io.ErrUnexpectedEOF {
-							leftCount = ptData.Head.Len - protocols.HeadSize - uint16(n)
+							leftCount = ptData.Head.Len - protocol.HeadSize - uint16(n)
 							ptData.Content.Write(leftBuff)
 							break
 						}else {

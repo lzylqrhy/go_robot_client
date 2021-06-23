@@ -1,4 +1,4 @@
-package protocols
+package protocol
 
 import (
 	"bytes"
@@ -12,14 +12,14 @@ import (
 const HeadSize = 4	// 协议头长度
 
 // 协议头
-type ProtocolHeader struct {
+type Header struct {
 	Cmd uint16
 	Len uint16
 }
 
 // 协议数据类
 type Protocol struct {
-	Head ProtocolHeader
+	Head    Header
 	Content bytes.Buffer
 }
 

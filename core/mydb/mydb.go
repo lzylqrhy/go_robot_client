@@ -2,13 +2,13 @@ package mydb
 
 import (
 	"context"
+	"github/go-robot/core/mydb/dbtypes"
+	"github/go-robot/core/mydb/mymysql"
 	"github/go-robot/global"
-	"github/go-robot/mydb/dbtypes"
-	"github/go-robot/mydb/mymysql"
 )
 
 type MyDB interface {
-	Query(sqlFmt string, args ...interface{}) [] dbtypes.DBRow
+	Query(sqlFmt string, args ...interface{}) []dbtypes.DBRow
 	Execute(sqlFmt string, args ...interface{}) (affectRows int64, lastInsertID int64)
 }
 

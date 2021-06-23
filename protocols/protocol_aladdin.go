@@ -1,6 +1,7 @@
 package protocols
 
 import (
+	"github/go-robot/core/protocol"
 	"github/go-robot/util"
 )
 
@@ -27,7 +28,7 @@ type S2CAladdinPlayerInfo struct {
 	addr       string
 }
 
-func (p *S2CAladdinPlayerInfo) Parse(pb *Protocol) {
+func (p *S2CAladdinPlayerInfo) Parse(pb *protocol.Protocol) {
 	var err error
 	util.CheckError(pb.GetNumber(&p.CharID))
 	util.CheckError(pb.GetNumber(&p.PID))
@@ -54,7 +55,7 @@ type C2SAladdinJoinRoom struct {
 }
 
 func (p *C2SAladdinJoinRoom) Bytes() []byte {
-	var pb Protocol
+	var pb protocol.Protocol
 	pb.SetCmd(AladdinJoinRoomCode)
 	pb.AppendNumber(p.GameID)
 	return pb.Bytes()
@@ -64,7 +65,7 @@ type S2CAladdinJoinRoom struct {
 	Result uint8
 }
 
-func (p *S2CAladdinJoinRoom) Parse(pb *Protocol) {
+func (p *S2CAladdinJoinRoom) Parse(pb *protocol.Protocol) {
 	err := pb.GetNumber(p)
 	util.CheckError(err)
 }
@@ -77,7 +78,7 @@ type C2SAladdinPlay struct {
 }
 
 func (p *C2SAladdinPlay) Bytes() []byte {
-	var pb Protocol
+	var pb protocol.Protocol
 	pb.SetCmd(AladdinPlayCode)
 	pb.AppendNumber(p)
 	return pb.Bytes()
@@ -94,7 +95,7 @@ type AladdinLine struct {
 	IsFree uint8
 }
 
-func (line *AladdinLine) Parse(pb *Protocol) {
+func (line *AladdinLine) Parse(pb *protocol.Protocol) {
 	util.CheckError(pb.GetNumber(&line.ID))
 	// 连续点的数量
 	var lineNum uint8
@@ -114,7 +115,7 @@ type AladdinResult struct {
 	Grade uint32
 }
 
-func (re *AladdinResult) Parse(pb *Protocol) {
+func (re *AladdinResult) Parse(pb *protocol.Protocol) {
 	var num uint8
 	util.CheckError(pb.GetNumber(&num))
 	re.Icon = make([]AladdinIcon, num)
@@ -135,7 +136,7 @@ type S2CAladdinPlayResult struct {
 	ReInfo []AladdinResult
 }
 
-func (p *S2CAladdinPlayResult) Parse(pb *Protocol) {
+func (p *S2CAladdinPlayResult) Parse(pb *protocol.Protocol) {
 	util.CheckError(pb.GetNumber(&p.Result))
 	var count uint8
 	util.CheckError(pb.GetNumber(&count))

@@ -2,8 +2,11 @@ package aladdin
 
 import (
 	"github/go-robot/common"
+	"github/go-robot/core"
+	mynet "github/go-robot/core/mynet"
+	"github/go-robot/core/protocol"
 	"github/go-robot/global"
-	myNet "github/go-robot/net"
+	"github/go-robot/global/ini"
 	"github/go-robot/protocols"
 	"log"
 	"math/rand"
@@ -16,7 +19,7 @@ type FClient struct {
 	gameCurrency      uint64	// 游戏币
 }
 
-func NewClient(index uint, pd *common.PlatformData, dialer myNet.MyDialer) common.Client {
+func NewClient(index uint, pd *common.PlatformData, dialer mynet.MyDialer) core.RobotClient {
 	c := new(FClient)
 	c.Index = uint32(index)
 	c.PtData = pd
@@ -51,7 +54,7 @@ func (c *FClient)OnDisconnected()  {
 	log.Printf("client index=%d disconnected\n", c.Index)
 }
 
-func (c *FClient)ProcessProtocols(p *protocols.Protocol) bool {
+func (c *FClient)ProcessProtocols(p *protocol.Protocol) bool {
 	//log.Printf("cmd:0x%04x\n", p.Head.Cmd)
 	isCommon, isOK := c.ProcessCommonProtocols(p)
 	if isCommon {
@@ -73,7 +76,7 @@ func (c *FClient)ProcessProtocols(p *protocols.Protocol) bool {
 	return true
 }
 
-func (c *FClient) processLogin(p *protocols.Protocol) bool {
+func (c *FClient) processLogin(p *protocol.Protocol) bool {
 	var s2cLogin protocols.S2CLogin
 	s2cLogin.Parse(p)
 	if s2cLogin.Status == 1 {
@@ -84,7 +87,7 @@ func (c *FClient) processLogin(p *protocols.Protocol) bool {
 		c.SendPacket(c2sLoaded.Bytes())
 		// 进入房间
 		var c2sEnterRoom protocols.C2SEnterRoom
-		c2sEnterRoom.RoomID = uint32(global.AladdinSetting.RoomID)
+		c2sEnterRoom.RoomID = uint32(ini.AladdinSetting.RoomID)
 		c.SendPacket(c2sEnterRoom.Bytes())
 		return true
 	}
@@ -92,7 +95,7 @@ func (c *FClient) processLogin(p *protocols.Protocol) bool {
 	return false
 }
 
-func (c *FClient) processPlayerInfo(p *protocols.Protocol) bool {
+func (c *FClient) processPlayerInfo(p *protocol.Protocol) bool {
 	var s2cPlayer protocols.S2CAladdinPlayerInfo
 	s2cPlayer.Parse(p)
 	log.Printf("client index=%d, pid=%d get player info successfully, player=%v\n", c.Index, c.PtData.PID, s2cPlayer)
@@ -100,7 +103,7 @@ func (c *FClient) processPlayerInfo(p *protocols.Protocol) bool {
 	return true
 }
 
-func (c *FClient) processEnterRoom(p *protocols.Protocol) bool {
+func (c *FClient) processEnterRoom(p *protocol.Protocol) bool {
 	var s2cEnterRoom protocols.S2CEnterRoom
 	s2cEnterRoom.Parse(p)
 	if s2cEnterRoom.Result != 1 {
@@ -115,7 +118,7 @@ func (c *FClient) processEnterRoom(p *protocols.Protocol) bool {
 	return true
 }
 
-func (c *FClient) processJoinRoom(p *protocols.Protocol) bool {
+func (c *FClient) processJoinRoom(p *protocol.Protocol) bool {
 	var s2cJoinRoom protocols.S2CAladdinJoinRoom
 	s2cJoinRoom.Parse(p)
 	if s2cJoinRoom.Result == 1 {
@@ -131,7 +134,7 @@ func (c *FClient) processJoinRoom(p *protocols.Protocol) bool {
 	return false
 }
 
-func (c *FClient) processPlayResult(p *protocols.Protocol) bool {
+func (c *FClient) processPlayResult(p *protocol.Protocol) bool {
 	var s2cPlay protocols.S2CAladdinPlayResult
 	s2cPlay.Parse(p)
 	if s2cPlay.Result == 1 {
@@ -151,7 +154,7 @@ func (c *FClient) processPlayResult(p *protocols.Protocol) bool {
 }
 
 func (c *FClient) play() {
-	line, chip := uint8(global.AladdinSetting.Line), uint32(global.AladdinSetting.Chip)
+	line, chip := uint8(ini.AladdinSetting.Line), uint32(ini.AladdinSetting.Chip)
 	allAmount := uint32(line) * chip
 	if uint64(allAmount) > c.gameCurrency {
 		log.Printf("client index=%d, pid=%d has no enough money, pull failed, need=%d, cur=%d\n",
@@ -161,7 +164,7 @@ func (c *FClient) play() {
 	c.gameCurrency -= uint64(allAmount)
 	// 发游戏协议
 	c2sPlay := protocols.C2SAladdinPlay{}
-	c2sPlay.Line = uint8(global.AladdinSetting.Line)
+	c2sPlay.Line = uint8(ini.AladdinSetting.Line)
 	c2sPlay.Amount = allAmount
 	c.SendPacket(c2sPlay.Bytes())
 }

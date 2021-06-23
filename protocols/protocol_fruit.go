@@ -1,6 +1,7 @@
 package protocols
 
 import (
+	"github/go-robot/core/protocol"
 	"github/go-robot/util"
 )
 
@@ -27,7 +28,7 @@ type S2CFruitPlayerInfo struct {
 	addr       string
 }
 
-func (p *S2CFruitPlayerInfo) Parse(pb *Protocol) {
+func (p *S2CFruitPlayerInfo) Parse(pb *protocol.Protocol) {
 	var err error
 	util.CheckError(pb.GetNumber(&p.CharID))
 	util.CheckError(pb.GetNumber(&p.PID))
@@ -54,7 +55,7 @@ type C2SFruitJoinRoom struct {
 }
 
 func (p *C2SFruitJoinRoom) Bytes() []byte {
-	var pb Protocol
+	var pb protocol.Protocol
 	pb.SetCmd(FruitJoinRoomCode)
 	pb.AppendNumber(p.GameID)
 	return pb.Bytes()
@@ -64,7 +65,7 @@ type S2CFruitJoinRoom struct {
 	Result uint8
 }
 
-func (p *S2CFruitJoinRoom) Parse(pb *Protocol) {
+func (p *S2CFruitJoinRoom) Parse(pb *protocol.Protocol) {
 	err := pb.GetNumber(p)
 	util.CheckError(err)
 }
@@ -77,7 +78,7 @@ type C2SFruitPlay struct {
 }
 
 func (p *C2SFruitPlay) Bytes() []byte {
-	var pb Protocol
+	var pb protocol.Protocol
 	pb.SetCmd(FruitPlayCode)
 	pb.AppendNumber(p)
 	return pb.Bytes()
@@ -94,7 +95,7 @@ type fruitLine struct {
 	IsFree uint8
 }
 
-func (line *fruitLine) Parse(pb *Protocol) {
+func (line *fruitLine) Parse(pb *protocol.Protocol) {
 	util.CheckError(pb.GetNumber(&line.ID))
 	// 连续点的数量
 	var lineNum uint8
@@ -113,7 +114,7 @@ type fruitResult struct {
 	Amount uint32
 }
 
-func (re *fruitResult) Parse(pb *Protocol) {
+func (re *fruitResult) Parse(pb *protocol.Protocol) {
 	var num uint8
 	util.CheckError(pb.GetNumber(&num))
 	re.Icon = make([]fruitIcon, num)
@@ -134,7 +135,7 @@ type S2CFruitPlayResult struct {
 	ReInfo []fruitResult
 }
 
-func (p *S2CFruitPlayResult) Parse(pb *Protocol) {
+func (p *S2CFruitPlayResult) Parse(pb *protocol.Protocol) {
 	util.CheckError(pb.GetNumber(&p.Line))
 	util.CheckError(pb.GetNumber(&p.Result))
 	var count uint8

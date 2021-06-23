@@ -5,8 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
-	"github/go-robot/mydb/dbtypes"
-	"github/go-robot/util"
+	"github/go-robot/core/mydb/dbtypes"
 	"log"
 	"time"
 )
@@ -78,7 +77,7 @@ func (my *MySQL)Query(sqlFmt string, args ...interface{}) []dbtypes.DBRow {
 	// 获取列
 	cols, err := rows.Columns()
 	if err != nil {
-		util.CheckError(err)
+		log.Panicln("query get columns error: ", err)
 		return nil
 	}
 	// 返回值引用列表
@@ -92,7 +91,7 @@ func (my *MySQL)Query(sqlFmt string, args ...interface{}) []dbtypes.DBRow {
 	for rows.Next() {
 		err = rows.Scan(scanArgs...)
 		if err != nil {
-			util.CheckError(err)
+			log.Panicln("query result error: ", err)
 			return nil
 		}
 		re := make(dbtypes.DBRow)

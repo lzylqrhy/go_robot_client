@@ -1,9 +1,12 @@
 package protocols
 
-import "github/go-robot/util"
+import (
+	"github/go-robot/core/protocol"
+	"github/go-robot/util"
+)
 
 const (
-	PingCode = 0x1
+	//PingCode = 0x1	// 已在core层处理
 	SyncTimeCode = 0x3
 	C2SLoginCode = 0xC2
 	S2CLoginCode = 0x10
@@ -12,22 +15,12 @@ const (
 	OpenPackageCode = 0x2D
 )
 
-type C2SPing struct {
-	TimeStamp uint32
-}
-
-func (p *C2SPing) Bytes() []byte {
-	var pb Protocol
-	pb.SetCmd(PingCode)
-	return pb.Bytes()
-}
-
 type C2SSyncTime struct {
 
 }
 
 func (p *C2SSyncTime) Bytes() []byte {
-	var pb Protocol
+	var pb protocol.Protocol
 	pb.SetCmd(SyncTimeCode)
 	return pb.Bytes()
 }
@@ -42,7 +35,7 @@ type S2CSyncTime struct {
 	TimeStamp uint32
 }
 
-func (p *S2CSyncTime) Parse(pb *Protocol) {
+func (p *S2CSyncTime) Parse(pb *protocol.Protocol) {
 	err := pb.GetNumber(p)
 	util.CheckError(err)
 }
@@ -53,7 +46,7 @@ type C2SLogin struct {
 }
 
 func (p *C2SLogin) Bytes() []byte {
-	var pb Protocol
+	var pb protocol.Protocol
 	pb.SetCmd(C2SLoginCode)
 	pb.AppendNumber(p.IsChildGame)
 	pb.AppendStringUint8(p.Token)
@@ -65,7 +58,7 @@ type S2CLogin struct {
 	TimeStamp uint32
 }
 
-func (p *S2CLogin) Parse(pb *Protocol) {
+func (p *S2CLogin) Parse(pb *protocol.Protocol) {
 	err := pb.GetNumber(p)
 	util.CheckError(err)
 }
@@ -75,7 +68,7 @@ type C2SResourceLoaded struct {
 }
 
 func (p *C2SResourceLoaded) Bytes() []byte {
-	var pb Protocol
+	var pb protocol.Protocol
 	pb.SetCmd(ResLoadedCode)
 	return pb.Bytes()
 }
@@ -93,7 +86,7 @@ type S2COpenPackage struct {
 	Items []item
 }
 
-func (p *S2COpenPackage) Parse(pb *Protocol) {
+func (p *S2COpenPackage) Parse(pb *protocol.Protocol) {
 	var (
 		num uint8
 		err error
@@ -119,7 +112,7 @@ type C2SEnterRoom struct {
 }
 
 func (p *C2SEnterRoom) Bytes() []byte {
-	var pb Protocol
+	var pb protocol.Protocol
 	pb.SetCmd(EnterRoomCode)
 	pb.AppendNumber(p.RoomID)
 	return pb.Bytes()
@@ -130,7 +123,7 @@ type S2CEnterRoom struct {
 	Result uint8
 }
 
-func (p *S2CEnterRoom) Parse(pb *Protocol) {
+func (p *S2CEnterRoom) Parse(pb *protocol.Protocol) {
 	err := pb.GetNumber(p)
 	util.CheckError(err)
 }

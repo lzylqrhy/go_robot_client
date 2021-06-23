@@ -1,24 +1,29 @@
-package common
+/**
+ 机器人客户端接口，游戏主逻辑入口
+ created by lzy
+*/
+package core
 
 import (
 	"context"
-	"github/go-robot/global"
-	myNet "github/go-robot/net"
-	"github/go-robot/protocols"
+	"github/go-robot/core/mynet"
+	"github/go-robot/core/protocol"
 	"log"
 	"runtime/debug"
 	"sync"
 	"time"
 )
 
-type Client interface {
+// 机器人客户端接口
+type RobotClient interface {
 	Update()
 	OnConnected()
 	OnDisconnected()
-	ProcessProtocols(p *protocols.Protocol) bool
+	ProcessProtocols(p *protocol.Protocol) bool
 }
 
-func DoWork(ctx context.Context, wg *sync.WaitGroup, c Client, d myNet.MyDialer)  {
+// 游戏主入口
+func DoWork(ctx context.Context, wg *sync.WaitGroup, c RobotClient, d mynet.MyDialer, frameCount uint)  {
 	myCtx, cancel := context.WithCancel(ctx)
 	wg.Add(1)
 	go func() {
@@ -34,7 +39,10 @@ func DoWork(ctx context.Context, wg *sync.WaitGroup, c Client, d myNet.MyDialer)
 		if !d.Run(myCtx, wg) {
 			return
 		}
-		frameDuration := 1000 / global.GameCommonSetting.Frame
+		frameDuration := 1000
+		if frameCount > 0 && frameCount <= 1000 {
+			frameDuration = int(1000 / frameCount)
+		}
 		frameTick := time.NewTicker(time.Millisecond * time.Duration(frameDuration))
 		pingTick := time.NewTicker(time.Second * 10)
 		for {
@@ -82,7 +90,7 @@ func DoWork(ctx context.Context, wg *sync.WaitGroup, c Client, d myNet.MyDialer)
 			case <-frameTick.C: // 客户端定时器
 				c.Update()
 			case <-pingTick.C:
-				var ping protocols.C2SPing
+				var ping protocol.C2SPing
 				ping.TimeStamp = uint32(time.Now().Unix())
 				d.SendPacket(ping.Bytes())
 			}

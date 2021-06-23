@@ -1,5 +1,14 @@
 package global
 
+// 日志类型
+const (
+	Debug = 1 << iota
+	Warning
+	Error
+	Fatal
+	AllLog = Debug|Warning|Error|Fatal
+)
+
 // 游戏类型
 const (
 	FishGame = 1 + iota
@@ -7,6 +16,7 @@ const (
 	AladdinGame
 )
 
+// 物品
 const (
 	ItemCoin = 1000	// 金币
 	ItemFishBlackMissile = 2001	//  青铜炸弹
@@ -17,6 +27,7 @@ const (
 	ItemFishKingMissile = 2006	// 至尊炸弹
 )
 
+// 数据库
 const (
 	MySQL = 1 + iota
 )

@@ -1,4 +1,4 @@
-package protocols
+package protocol
 
 import (
 	"fmt"
@@ -39,7 +39,7 @@ func TestProtocol_AppendStringUint16(t *testing.T){
 
 func TestProtocol_GetNumber(t *testing.T){
 	var pb Protocol
-	pb.AppendNumber(ProtocolHeader{3, 4})
+	pb.AppendNumber(Header{3, 4})
 	pb.AppendNumber(float32(4.4))
 	var (
 		cmd uint16

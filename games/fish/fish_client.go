@@ -2,8 +2,10 @@ package fish
 
 import (
 	"github/go-robot/common"
-	"github/go-robot/global"
-	myNet "github/go-robot/net"
+	"github/go-robot/core"
+	"github/go-robot/core/mynet"
+	"github/go-robot/core/protocol"
+	"github/go-robot/global/ini"
 	"github/go-robot/protocols"
 	"log"
 	"math"
@@ -30,7 +32,7 @@ type FClient struct {
 	poseidonStatus   uint8  //波塞冬游戏状态
 }
 
-func NewClient(index uint, pd *common.PlatformData, dialer myNet.MyDialer) common.Client {
+func NewClient(index uint, pd *common.PlatformData, dialer mynet.MyDialer) core.RobotClient {
 	c := new(FClient)
 	c.Index = uint32(index)
 	c.PtData = pd
@@ -102,7 +104,7 @@ func (c *FClient)OnDisconnected()  {
 	c.isWork = false
 }
 
-func (c *FClient)ProcessProtocols(p *protocols.Protocol) bool {
+func (c *FClient)ProcessProtocols(p *protocol.Protocol) bool {
 	//log.Printf("cmd:0x%04x\n", p.Head.Cmd)
 	isCommon, isOK := c.ProcessCommonProtocols(p)
 	if isCommon {
@@ -150,7 +152,7 @@ func (c *FClient)ProcessProtocols(p *protocols.Protocol) bool {
 	return true
 }
 
-func (c *FClient) processLogin(p *protocols.Protocol) bool {
+func (c *FClient) processLogin(p *protocol.Protocol) bool {
 	var s2cLogin protocols.S2CLogin
 	s2cLogin.Parse(p)
 	if s2cLogin.Status == 1 {
@@ -165,7 +167,7 @@ func (c *FClient) processLogin(p *protocols.Protocol) bool {
 	return false
 }
 
-func (c *FClient) processPlayerInfo(p *protocols.Protocol) bool {
+func (c *FClient) processPlayerInfo(p *protocol.Protocol) bool {
 	var s2cPlayer protocols.S2CPlayerInfo
 	s2cPlayer.Parse(p)
 	log.Printf("client index=%d, pid=%d get player info successfully, player=%v\n", c.Index, c.PtData.PID, s2cPlayer)
@@ -173,7 +175,7 @@ func (c *FClient) processPlayerInfo(p *protocols.Protocol) bool {
 	return true
 }
 
-func (c *FClient) processEnterHallOrRoom(p *protocols.Protocol) bool {
+func (c *FClient) processEnterHallOrRoom(p *protocol.Protocol) bool {
 	var s2cGo protocols.S2CEnterHallOrRoom
 	s2cGo.Parse(p)
 	// 如果有房间ID，则说明是断线重连，进入对应房间
@@ -182,8 +184,8 @@ func (c *FClient) processEnterHallOrRoom(p *protocols.Protocol) bool {
 		roomID = s2cGo.RoomID
 	}else {
 		// 是否有指定房间
-		if global.FishSetting.RoomID > 0 {
-			roomID = uint32(global.FishSetting.RoomID)
+		if ini.FishSetting.RoomID > 0 {
+			roomID = uint32(ini.FishSetting.RoomID)
 		}else {
 			// 找到可进入的房间
 			validRoom := make([]uint32, 0, 3)
@@ -207,7 +209,7 @@ func (c *FClient) processEnterHallOrRoom(p *protocols.Protocol) bool {
 	return true
 }
 
-func (c *FClient) processRoomList(p *protocols.Protocol) bool {
+func (c *FClient) processRoomList(p *protocol.Protocol) bool {
 	var s2cRooms protocols.S2CRoomList
 	s2cRooms.Parse(p)
 	c.rooms = s2cRooms.Rooms
@@ -215,7 +217,7 @@ func (c *FClient) processRoomList(p *protocols.Protocol) bool {
 	return true
 }
 
-func (c *FClient) processEnterRoom(p *protocols.Protocol) bool {
+func (c *FClient) processEnterRoom(p *protocol.Protocol) bool {
 	var s2cEnterRoom protocols.S2CFishEnterRoom
 	s2cEnterRoom.Parse(p)
 	if s2cEnterRoom.Result != 0 {
@@ -233,7 +235,7 @@ func (c *FClient) processEnterRoom(p *protocols.Protocol) bool {
 	return true
 }
 
-func (c *FClient) processSceneInfo(p *protocols.Protocol) bool {
+func (c *FClient) processSceneInfo(p *protocol.Protocol) bool {
 	var s2cSceneInfo protocols.S2CGetSceneInfo
 	s2cSceneInfo.Parse(p)
 	log.Printf("client index=%d, pid=%d get scene info successfully\n", c.Index, c.PtData.PID)
@@ -242,7 +244,7 @@ func (c *FClient) processSceneInfo(p *protocols.Protocol) bool {
 	return true
 }
 
-func (c *FClient) processSeatsInfo(p *protocols.Protocol) bool {
+func (c *FClient) processSeatsInfo(p *protocol.Protocol) bool {
 	var s2cSeats protocols.S2CSeatsInfo
 	s2cSeats.Parse(p)
 	log.Printf("client index=%d, pid=%d get seat list successfully\n", c.Index, c.PtData.PID)
@@ -271,7 +273,7 @@ func (c *FClient) processSeatsInfo(p *protocols.Protocol) bool {
 	return true
 }
 
-func (c *FClient) processFishList(p *protocols.Protocol) bool {
+func (c *FClient) processFishList(p *protocol.Protocol) bool {
 	var s2cFish protocols.S2CFishList
 	s2cFish.Parse(p)
 	log.Printf("client index=%d, pid=%d get fish list successfully\n", c.Index, c.PtData.PID)
@@ -291,7 +293,7 @@ func (c *FClient) processFishList(p *protocols.Protocol) bool {
 	return true
 }
 
-func (c *FClient) processBulletList(p *protocols.Protocol) bool {
+func (c *FClient) processBulletList(p *protocol.Protocol) bool {
 	var s2cBullet protocols.S2CBulletList
 	s2cBullet.Parse(p)
 	log.Printf("client index=%d, pid=%d get bullet list successfully\n", c.Index, c.PtData.PID)
@@ -327,7 +329,7 @@ func (c *FClient) processBulletList(p *protocols.Protocol) bool {
 const CostWarning = 0
 
 func (c *FClient) fire() {
-	if !global.FishSetting.DoFire {
+	if !ini.FishSetting.DoFire {
 		return
 	}
 	// 判断钱是否足够
@@ -354,7 +356,7 @@ func (c *FClient) fire() {
 	c.fireTime[c2sFire.OriginID] = time.Now().UnixNano()
 }
 
-func (c *FClient) processFire(p *protocols.Protocol) bool {
+func (c *FClient) processFire(p *protocol.Protocol) bool {
 	var s2cFire protocols.S2CFire
 	s2cFire.Parse(p)
 	// 暂时只管自己的子弹
@@ -370,9 +372,10 @@ func (c *FClient) processFire(p *protocols.Protocol) bool {
 		log.Printf("client index=%d, pid=%d fire failed, result=%d \n", c.Index, c.PtData.PID, s2cFire.Result)
 		return true
 	}
-	log.Printf("client index=%d, pid=%d fire successfully\n", c.Index, c.PtData.PID)
+
 	// 更新游戏币
 	c.gameCurrency = uint64(s2cFire.Currency)
+	log.Printf("client index=%d, pid=%d fire successfully, money=%d\n", c.Index, c.PtData.PID, c.gameCurrency)
 
 	// 如果波塞冬房间，且要攻击波塞冬，则在波塞冬出现期间只打波塞冬
 	if c.canHitPoseidon() {
@@ -418,13 +421,13 @@ func (c *FClient) getOneFish() uint32 {
 	}
 	fishShow := make([]uint32, 0, 32) // 可绘制出来的鱼
 	mapFishType := make(map[uint32]uint32) // 当前鱼池鱼类型
-	checkType := len(global.FishSetting.CaptureFishType) > 0
+	checkType := len(ini.FishSetting.CaptureFishType) > 0
 	for k, v := range c.pond.mapFish {
 		if v.BornTime <= float64(c.getServerTime()) {
 			if checkType {
 				t := ConfMgr.getFishTypeByID(v.KindID)
 				mapFishType[t]++
-				if _, isExisting := global.FishSetting.CaptureFishType[t]; !isExisting {
+				if _, isExisting := ini.FishSetting.CaptureFishType[t]; !isExisting {
 					continue
 				}
 				//log.Printf("--------client index=%d, pid=%d can capture fish=%d, type=%d\n", c.Index, c.PtData.PID, k, t)
@@ -442,7 +445,7 @@ func (c *FClient) getOneFish() uint32 {
 	return fishShow[index]
 }
 
-func (c *FClient) processHitFish(p *protocols.Protocol) bool {
+func (c *FClient) processHitFish(p *protocol.Protocol) bool {
 	var s2cHit protocols.S2CHitFish
 	s2cHit.Parse(p)
 	for _, f := range s2cHit.DeadFish {
@@ -462,7 +465,7 @@ func (c *FClient) processHitFish(p *protocols.Protocol) bool {
 	return true
 }
 
-func (c *FClient) processGenerateFish(p *protocols.Protocol) bool {
+func (c *FClient) processGenerateFish(p *protocol.Protocol) bool {
 	var s2cGen protocols.S2CGenerateFish
 	s2cGen.Parse(p)
 	for _, f := range s2cGen.FishList {
@@ -481,7 +484,7 @@ func (c *FClient) processGenerateFish(p *protocols.Protocol) bool {
 	return true
 }
 
-func (c *FClient) processSyncFishBoom(p *protocols.Protocol) bool {
+func (c *FClient) processSyncFishBoom(p *protocol.Protocol) bool {
 	var s2cBoom protocols.S2CSyncBoom
 	s2cBoom.Parse(p)
 	// 鱼潮开始和结束时，清空鱼
@@ -492,7 +495,7 @@ func (c *FClient) processSyncFishBoom(p *protocols.Protocol) bool {
 	return true
 }
 
-func (c *FClient) processDrawRedPacket(p *protocols.Protocol) bool {
+func (c *FClient) processDrawRedPacket(p *protocol.Protocol) bool {
 	var s2cRedPacket protocols.S2CRedPacketInfo
 	s2cRedPacket.Parse(p)
 	// 获取红包配置
@@ -529,13 +532,13 @@ func (c *FClient) isPoseidonRoom() bool {
 }
 
 func (c *FClient) canHitPoseidon() bool {
-	if c.isPoseidonRoom() && c.poseidonStatus == 2 && global.FishSetting.HitPoseidon == 1 {
+	if c.isPoseidonRoom() && c.poseidonStatus == 2 && ini.FishSetting.HitPoseidon == 1 {
 		return true
 	}
 	return false
 }
 
-func (c *FClient) processPoseidonStatus(p *protocols.Protocol) bool {
+func (c *FClient) processPoseidonStatus(p *protocol.Protocol) bool {
 	var s2cPoseidonStatus protocols.S2CPoseidonStatus
 	s2cPoseidonStatus.Parse(p)
 	c.poseidonStatus = s2cPoseidonStatus.Status
@@ -543,7 +546,7 @@ func (c *FClient) processPoseidonStatus(p *protocols.Protocol) bool {
 	return true
 }
 
-func (c *FClient) processHitPoseidon(p *protocols.Protocol) bool {
+func (c *FClient) processHitPoseidon(p *protocol.Protocol) bool {
 	var s2cHitPoseidon protocols.S2CHitPoseidon
 	s2cHitPoseidon.Parse(p)
 	if s2cHitPoseidon.CharID == c.charID {
@@ -554,13 +557,13 @@ func (c *FClient) processHitPoseidon(p *protocols.Protocol) bool {
 }
 
 func (c *FClient)switchCaliber()  {
-	if caliber := uint32(global.FishSetting.Caliber); global.FishSetting.Caliber > 0 && caliber != c.caliber {
+	if caliber := uint32(ini.FishSetting.Caliber); ini.FishSetting.Caliber > 0 && caliber != c.caliber {
 		c2sSwitchCaliber := protocols.C2SSwitchCaliber{Caliber: caliber}
 		c.SendPacket(c2sSwitchCaliber.Bytes())
 	}
 }
 
-func (c *FClient) processSwitchCaliber(p *protocols.Protocol) bool {
+func (c *FClient) processSwitchCaliber(p *protocol.Protocol) bool {
 	var s2cSwitchCaliber protocols.S2CSwitchCaliber
 	s2cSwitchCaliber.Parse(p)
 	if s2cSwitchCaliber.CharID == c.charID {
@@ -570,11 +573,11 @@ func (c *FClient) processSwitchCaliber(p *protocols.Protocol) bool {
 }
 
 func (c *FClient) launchMissile() {
-	if global.FishSetting.LaunchMode == 0 {
+	if ini.FishSetting.LaunchMode == 0 {
 		return
 	}
 	modelID := uint(0)
-	for _, id := range global.FishSetting.Missiles {
+	for _, id := range ini.FishSetting.Missiles {
 		if v, isOK := c.Items[uint32(id)]; isOK {
 			if v > 0 {
 				modelID = id
@@ -623,7 +626,7 @@ func (c *FClient) getOneSpecifiedFish(dstType uint32) uint32 {
 	return fishShow[index]
 }
 
-func (c *FClient) processLaunchMissile(p *protocols.Protocol) bool {
+func (c *FClient) processLaunchMissile(p *protocol.Protocol) bool {
 	var s2cMissile protocols.S2CLaunchMissile
 	s2cMissile.Parse(p)
 	// 判断角色, 不是自己，直接返回
@@ -641,7 +644,7 @@ func (c *FClient) processLaunchMissile(p *protocols.Protocol) bool {
 	c.gameCurrency = uint64(s2cMissile.Currency)
 	log.Printf("client index=%d, pid=%d launch missile successfully, model id=%d, left=%d, current money=%d\n",
 		c.Index, c.PtData.PID, s2cMissile.ModelID, c.Items[s2cMissile.ModelID], c.gameCurrency)
-	if global.FishSetting.LaunchMode == 2 && 0 == c.Items[s2cMissile.ModelID] {
+	if ini.FishSetting.LaunchMode == 2 && 0 == c.Items[s2cMissile.ModelID] {
 		if 0 == c.Items[s2cMissile.ModelID] {
 			c.Dialer.Disconnect()
 			c.isWork = false

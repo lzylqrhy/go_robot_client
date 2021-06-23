@@ -1,17 +1,23 @@
+/**
+ 获取各游戏的机器人对象，并设置初始数据
+ created by lzy
+*/
 package games
 
 import (
 	"github/go-robot/common"
+	"github/go-robot/core"
+	"github/go-robot/core/mynet"
 	"github/go-robot/games/aladdin"
 	"github/go-robot/games/fish"
 	"github/go-robot/games/fruit"
 	"github/go-robot/global"
-	myNet "github/go-robot/net"
+	"github/go-robot/global/ini"
 	"log"
 )
 
-func NewClient(index uint, pd *common.PlatformData, dialer myNet.MyDialer) common.Client {
-	switch global.MainSetting.GameID {
+func NewClient(index uint, pd *common.PlatformData, dialer mynet.MyDialer) core.RobotClient {
+	switch ini.MainSetting.GameID {
 	case global.FishGame:
 		return fish.NewClient(index, pd, dialer)
 	case global.FruitGame:
@@ -24,11 +30,11 @@ func NewClient(index uint, pd *common.PlatformData, dialer myNet.MyDialer) commo
 }
 
 func SetRobotTestData(pds []*common.PlatformData)  {
-	switch global.MainSetting.GameID {
+	switch ini.MainSetting.GameID {
 	case global.FishGame:
 		fish.RunTestData(pds)
 	default:
-		log.Printf("game %d have no test data", global.MainSetting.GameID)
+		log.Printf("game %d have no test data", ini.MainSetting.GameID)
 	}
-	log.Printf("game %d set robot data completed", global.MainSetting.GameID)
+	log.Printf("game %d set robot data completed", ini.MainSetting.GameID)
 }

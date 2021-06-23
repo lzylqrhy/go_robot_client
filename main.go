@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"github/go-robot/common"
+	"github/go-robot/core"
+	"github/go-robot/core/mynet"
 	"github/go-robot/games"
 	"github/go-robot/global"
-	myNet "github/go-robot/net"
+	"github/go-robot/global/ini"
 	"log"
 	"math/rand"
 	//_ "net/http/pprof"
@@ -28,9 +30,8 @@ func main() {
 	defer f.Close()
 
 	// 读取配置
-	global.LoadSetting()
-	cfg := &global.MainSetting
-
+	ini.LoadSetting()
+	cfg := &ini.MainSetting
 	// 从平台获取信息
 	userList := common.GetPlatformUserData()
 	var wg sync.WaitGroup
@@ -43,23 +44,24 @@ func main() {
 		var serverAddr string
 		switch cfg.GameID {
 		case global.FishGame:
-			serverAddr = global.FishSetting.ServerAddr
+			serverAddr = ini.FishSetting.ServerAddr
 		case global.FruitGame:
-			serverAddr = global.FruitSetting.ServerAddr
+			serverAddr = ini.FruitSetting.ServerAddr
 		}
 		if "" == serverAddr {
-			if myNet.WS == cfg.NetProtocol {
+			if mynet.WS == cfg.NetProtocol {
 				serverAddr = user.WSServerAddr
 			} else {
 				log.Println("when protocol is not ws, must set server")
 				break
 			}
 		}
-		d := myNet.NewConnect(cfg.NetProtocol, serverAddr)
+		// 网络连接
+		d := mynet.NewConnect(cfg.NetProtocol, serverAddr)
 		// 创建客户端
 		c := games.NewClient(uint(i), user, d)
 		// 开工
-		common.DoWork(ctx, &wg, c, d)
+		core.DoWork(ctx, &wg, c, d, ini.GameCommonSetting.Frame)
 	}
 	//http.ListenAndServe("0.0.0.0:6060", nil)
 	// 监听信号
@@ -71,7 +73,7 @@ func main() {
 	wg.Wait()
 	log.Println("exit")
 }
-
+// 等待主动关闭的信号
 func waitForASignal()  {
 	sig := make(chan os.Signal)
 	signal.Notify(sig, os.Interrupt)

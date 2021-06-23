@@ -1,4 +1,4 @@
-package global
+package ini
 
 import (
 	"github/go-robot/util"
@@ -6,31 +6,31 @@ import (
 	"log"
 )
 
-var FruitSetting struct{
+var AladdinSetting struct{
 	ServerAddr string
 	RoomID     uint
 	Line uint
 	Chip uint
 }
 
-func getFruitConfig(){
-	path := "./configs/fruit.ini"
+func getAladdinConfig(){
+	path := "./configs/aladdin.ini"
 	conf, err := ini.Load(path)
 	util.CheckError(err)
 
-	section := conf.Section("fruit")
+	section := conf.Section("aladdin")
 	if section == nil {
 		log.Fatalf("fruit setting is not existed in %s\n", path)
 	}
 	GameCommonSetting.Frame = getOptionUInt(section, "frame", 1)
-	FruitSetting.ServerAddr = section.Key("server_addr").String()
+	AladdinSetting.ServerAddr = section.Key("server_addr").String()
 	if section.HasKey("room_id") {
-		FruitSetting.RoomID, err = section.Key("room_id").Uint()
+		AladdinSetting.RoomID, err = section.Key("room_id").Uint()
 		util.CheckError(err)
 	} else {
 		log.Fatalf("fruit setting need room_id option in %s\n", path)
 	}
-	FruitSetting.Line = getOptionUInt(section, "line", 9)
-	FruitSetting.Chip = getOptionUInt(section, "chip", 1)
+	AladdinSetting.Line = getOptionUInt(section, "line", 50)
+	AladdinSetting.Chip = getOptionUInt(section, "chip", 1)
 }
 
