@@ -144,7 +144,7 @@ func (c *FClient) play() {
 	line, chip := uint8(ini.FruitSetting.Line), uint32(ini.FruitSetting.Chip)
 	allAmount := uint32(line) * chip
 	if uint64(allAmount) > c.gameCurrency {
-		log.Printf("client index=%d, pid=%d has no enough money, pull failed, need=%d, cur=%d\n",
+		c.Disconnect("client index=%d, pid=%d has no enough money, pull failed, need=%d, cur=%d\n",
 			c.Index, c.PtData.PID, allAmount, c.gameCurrency)
 		return
 	}

@@ -24,6 +24,12 @@ func (c *ClientBase) SendPacket(msg []byte)  {
 	c.Dialer.SendPacket(msg)
 }
 
+func (c *ClientBase) Disconnect(fmt string, args ...interface{})  {
+	log.Printf(fmt, args...)
+	c.Dialer.Disconnect()
+	c.IsWorking = false
+}
+
 // 处理公共协议
 func (c *ClientBase)ProcessCommonProtocols(p *protocol.Protocol) (bool, bool) {
 	switch p.Head.Cmd {

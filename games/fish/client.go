@@ -14,22 +14,21 @@ import (
 )
 
 type FClient struct {
-	common.ClientBase      // 公共数据
+	common.ClientBase        // 公共数据
 	pond              pond // 鱼池
 	charID            uint32
 	gameCurrency      uint64	// 游戏币
 	seatID            uint8
-	cannonID         uint32
-	caliber          uint32
-	caliberLV        uint8
-	status           uint16   // 游戏状态（来自服务端）
-	isWork           bool     // 是否工作
-	originSerial     uint32   // 子弹最新本地序号
-	bulletCache      []bullet // 子弹缓存
-	rooms            []protocols.Room // 房间列表
-	fireTime,hitTime map[uint32]int64
-	getInfoTime      int64
-	poseidonStatus   uint8  //波塞冬游戏状态
+	cannonID          uint32
+	caliber           uint32
+	caliberLV         uint8
+	status            uint16           // 游戏状态（来自服务端）
+	originSerial      uint32           // 子弹最新本地序号
+	bulletCache       []bullet         // 子弹缓存
+	rooms             []protocols.Room // 房间列表
+	fireTime,hitTime  map[uint32]int64
+	getInfoTime       int64
+	poseidonStatus    uint8  //波塞冬游戏状态
 }
 
 func NewClient(index uint, pd *common.PlatformData, dialer mynet.MyDialer) core.RobotClient {
@@ -56,7 +55,7 @@ func (c *FClient) getServerTime() uint64 {
 
 func (c *FClient)Update() {
 	//log.Printf("client serial=%d update\n", c.serial)
-	if !c.isWork {
+	if !c.IsWorking {
 		return
 	}
 	// 更新鱼坐标
@@ -101,7 +100,7 @@ func (c *FClient)OnConnected()  {
 
 func (c *FClient)OnDisconnected()  {
 	log.Printf("client index=%d, pid=%d disconnected\n", c.Index, c.PtData.PID)
-	c.isWork = false
+	c.IsWorking = false
 }
 
 func (c *FClient)ProcessProtocols(p *protocol.Protocol) bool {
@@ -154,12 +153,6 @@ func (c *FClient)ProcessProtocols(p *protocol.Protocol) bool {
 		log.Printf("process cmd:0x%04x unsuccessfully, will exit\n", p.Head.Cmd)
 	}
 	return isOK
-}
-
-func (c *FClient) disconnect(fmt string, args ...interface{})  {
-	log.Printf(fmt, args...)
-	c.Dialer.Disconnect()
-	c.isWork = false
 }
 
 func (c *FClient) processLogin(p *protocol.Protocol) bool {
@@ -331,7 +324,7 @@ func (c *FClient) processBulletList(p *protocol.Protocol) bool {
 		//	BornTime: b.BornTime,
 		//}
 	}
-	c.isWork = true
+	c.IsWorking = true
 	//log.Println("----------------------------c.getInfo cost", time.Now().UnixNano() / 1e6 - c.getInfoTime)
 	return true
 }
@@ -344,7 +337,7 @@ func (c *FClient) fire() {
 	}
 	// 判断钱是否足够
 	if c.gameCurrency < uint64(c.caliber) {
-		c.disconnect("client index=%d charid=%d has no enough coin, need=%d, cur=%d, will exit \n", c.Index, c.charID, c.caliber, c.gameCurrency)
+		c.Disconnect("client index=%d charid=%d has no enough coin, need=%d, cur=%d, will exit \n", c.Index, c.charID, c.caliber, c.gameCurrency)
 		return
 	}
 	c.gameCurrency -= uint64(c.caliber)
@@ -658,7 +651,7 @@ func (c *FClient) processLaunchMissile(p *protocol.Protocol) bool {
 				return true
 			}
 		}
-		c.disconnect("client index=%d, pid=%d, char id=%d has no enough missiles, will exit \n", c.Index, c.PtData.PID, c.charID)
+		c.Disconnect("client index=%d, pid=%d, char id=%d has no enough missiles, will exit \n", c.Index, c.PtData.PID, c.charID)
 	}
 	return true
 }
