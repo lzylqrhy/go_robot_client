@@ -107,49 +107,59 @@ func (c *FClient)OnDisconnected()  {
 func (c *FClient)ProcessProtocols(p *protocol.Protocol) bool {
 	//log.Printf("cmd:0x%04x\n", p.Head.Cmd)
 	isCommon, isOK := c.ProcessCommonProtocols(p)
-	if isCommon {
-		return isOK
+	if !isCommon {
+		switch p.Head.Cmd {
+		case protocols.S2CLoginCode:
+			isOK = c.processLogin(p)
+		case protocols.EnterHallOrRoomCode:
+			isOK = c.processEnterHallOrRoom(p)
+		case protocols.ReadPacketInfoCode:
+			isOK = c.processDrawRedPacket(p)
+		case protocols.RoomListCode:
+			isOK = c.processRoomList(p)
+		case protocols.PlayerCode:
+			isOK = c.processPlayerInfo(p)
+		case protocols.FishEnterRoomCode:
+			isOK = c.processEnterRoom(p)
+		case protocols.SceneInfoCode:
+			isOK = c.processSceneInfo(p)
+		case protocols.PlayerSeatCode:
+			isOK = c.processSeatsInfo(p)
+		case protocols.FishListCode:
+			isOK = c.processFishList(p)
+		case protocols.BulletListCode:
+			isOK = c.processBulletList(p)
+		case protocols.FireCode:
+			isOK = c.processFire(p)
+		case protocols.HitFishCode:
+			isOK = c.processHitFish(p)
+		case protocols.SyncFishBoom:
+			isOK = c.processSyncFishBoom(p)
+		case protocols.GenerateFish:
+			isOK = c.processGenerateFish(p)
+		case protocols.PoseidonStatusCode:
+			isOK = c.processPoseidonStatus(p)
+		case protocols.HitPoseidonCode:
+			isOK = c.processHitPoseidon(p)
+		case protocols.SwitchCaliberCode:
+			isOK = c.processSwitchCaliber(p)
+		case protocols.LaunchMissileCode:
+			isOK = c.processLaunchMissile(p)
+		default:
+			log.Printf("cmd:0x%04x don't be processed\n", p.Head.Cmd)
+			isOK = true
+		}
 	}
-	switch p.Head.Cmd {
-	case protocols.S2CLoginCode:
-		return c.processLogin(p)
-	case protocols.EnterHallOrRoomCode:
-		return c.processEnterHallOrRoom(p)
-	case protocols.ReadPacketInfoCode:
-		return c.processDrawRedPacket(p)
-	case protocols.RoomListCode:
-		return c.processRoomList(p)
-	case protocols.PlayerCode:
-		return c.processPlayerInfo(p)
-	case protocols.FishEnterRoomCode:
-		return c.processEnterRoom(p)
-	case protocols.SceneInfoCode:
-		return c.processSceneInfo(p)
-	case protocols.PlayerSeatCode:
-		return c.processSeatsInfo(p)
-	case protocols.FishListCode:
-		return c.processFishList(p)
-	case protocols.BulletListCode:
-		return c.processBulletList(p)
-	case protocols.FireCode:
-		return c.processFire(p)
-	case protocols.HitFishCode:
-		return c.processHitFish(p)
-	case protocols.SyncFishBoom:
-		return c.processSyncFishBoom(p)
-	case protocols.GenerateFish:
-		return c.processGenerateFish(p)
-	case protocols.PoseidonStatusCode:
-		return c.processPoseidonStatus(p)
-	case protocols.HitPoseidonCode:
-		return c.processHitPoseidon(p)
-	case protocols.SwitchCaliberCode:
-		return c.processSwitchCaliber(p)
-	case protocols.LaunchMissileCode:
-		return c.processLaunchMissile(p)
+	if !isOK {
+		log.Printf("process cmd:0x%04x unsuccessfully \n", p.Head.Cmd)
 	}
-	log.Printf("cmd:0x%04x don't process\n", p.Head.Cmd)
-	return true
+	return isOK
+}
+
+func (c *FClient) disconnect(fmt string, args ...interface{})  {
+	log.Printf(fmt, args...)
+	c.Dialer.Disconnect()
+	c.isWork = false
 }
 
 func (c *FClient) processLogin(p *protocol.Protocol) bool {
@@ -334,11 +344,10 @@ func (c *FClient) fire() {
 	}
 	// 判断钱是否足够
 	if c.gameCurrency < uint64(c.caliber) {
-		log.Printf("client index=%d charid=%d has no enough coin, need=%d, cur=%d, will exit \n", c.Index, c.charID, c.caliber, c.gameCurrency)
-		c.Dialer.Disconnect()
-		c.isWork = false
+		c.disconnect("client index=%d charid=%d has no enough coin, need=%d, cur=%d, will exit \n", c.Index, c.charID, c.caliber, c.gameCurrency)
 		return
 	}
+	c.gameCurrency -= uint64(c.caliber)
 	// 判断缓存的子弹是否达到上限
 	if len(c.bulletCache) >= 20 {
 		log.Printf("client index=%d charid=%d has max buttel count >= 20 \n", c.Index, c.charID)
@@ -365,7 +374,7 @@ func (c *FClient) processFire(p *protocol.Protocol) bool {
 	}
 	costTime := (time.Now().UnixNano() - c.fireTime[s2cFire.OriginID]) / 1e6
 	if costTime > CostWarning {
-		log.Printf("------client index=%d, pid=%d fire cost time %d\n", c.Index, c.PtData.PID, costTime)
+		log.Printf("client index=%d, pid=%d fire cost time %d\n", c.Index, c.PtData.PID, costTime)
 	}
 	delete(c.fireTime, s2cFire.OriginID)
 	if 0 != s2cFire.Result {
@@ -416,7 +425,7 @@ func (c *FClient) processFire(p *protocol.Protocol) bool {
 
 func (c *FClient) getOneFish() uint32 {
 	if 0 == len(c.pond.mapFish) {
-		log.Printf("--------client index=%d, pid=%d has no any fish\n", c.Index, c.PtData.PID)
+		log.Printf("client index=%d, pid=%d has no any fish\n", c.Index, c.PtData.PID)
 		return 0
 	}
 	fishShow := make([]uint32, 0, 32) // 可绘制出来的鱼
@@ -430,17 +439,17 @@ func (c *FClient) getOneFish() uint32 {
 				if _, isExisting := ini.FishSetting.CaptureFishType[t]; !isExisting {
 					continue
 				}
-				//log.Printf("--------client index=%d, pid=%d can capture fish=%d, type=%d\n", c.Index, c.PtData.PID, k, t)
+				//log.Printf("client index=%d, pid=%d can capture fish=%d, type=%d\n", c.Index, c.PtData.PID, k, t)
 			}
 			fishShow = append(fishShow, k)
 		}
 	}
 	count := len(fishShow)
 	if 0 == count {
-		log.Printf("--------client index=%d, pid=%d has no target fish, all fish count=%d, fish types is %v\n", c.Index, c.PtData.PID, len(c.pond.mapFish), mapFishType)
+		log.Printf("client index=%d, pid=%d has no target fish, all fish count=%d, fish types is %v\n", c.Index, c.PtData.PID, len(c.pond.mapFish), mapFishType)
 		return 0
 	}
-	log.Printf("--------client index=%d, pid=%d target fish count=%d\n", c.Index, c.PtData.PID, count)
+	log.Printf("client index=%d, pid=%d target fish count=%d\n", c.Index, c.PtData.PID, count)
 	index := rand.Int31n(int32(count))
 	return fishShow[index]
 }
@@ -458,7 +467,7 @@ func (c *FClient) processHitFish(p *protocol.Protocol) bool {
 		c.gameCurrency = uint64(s2cHit.Currency)
 		costTime := (time.Now().UnixNano() - c.hitTime[s2cHit.Serial]) / 1e6
 		if costTime > CostWarning {
-			log.Printf("------client index=%d, pid=%d hit cost time %d\n", c.Index, c.PtData.PID, costTime)
+			log.Printf("client index=%d, pid=%d hit cost time %d\n", c.Index, c.PtData.PID, costTime)
 		}
 		delete(c.hitTime, s2cHit.Serial)
 	}
@@ -578,12 +587,10 @@ func (c *FClient) launchMissile() {
 	}
 	modelID := uint(0)
 	for _, id := range ini.FishSetting.Missiles {
-		if v, isOK := c.Items[uint32(id)]; isOK {
-			if v > 0 {
-				modelID = id
-				c.Items[uint32(id)]--
-				break
-			}
+		if c.Items[uint32(id)] > 0 {
+			modelID = id
+			c.Items[uint32(id)]--
+			break
 		}
 	}
 	if modelID == 0 {
@@ -594,13 +601,13 @@ func (c *FClient) launchMissile() {
 	if fishID > 0 {
 		c2sLaunch := protocols.C2SLaunchMissile{MissileID: uint32(modelID), TargetFish: fishID}
 		c.SendPacket(c2sLaunch.Bytes())
-		log.Printf("------client index=%d, pid=%d has no any fish\n", c.Index, c.PtData.PID)
+		log.Printf("client index=%d, pid=%d has no any fish\n", c.Index, c.PtData.PID)
 	}
 }
 
 func (c *FClient) getOneSpecifiedFish(dstType uint32) uint32 {
 	if 0 == len(c.pond.mapFish) {
-		log.Printf("------client index=%d, pid=%d has no any fish\n", c.Index, c.PtData.PID)
+		log.Printf("client index=%d, pid=%d has no any fish\n", c.Index, c.PtData.PID)
 		return 0
 	}
 	fishShow := make([]uint32, 0, 4) // 可绘制出来的鱼
@@ -617,11 +624,11 @@ func (c *FClient) getOneSpecifiedFish(dstType uint32) uint32 {
 	}
 	count := len(fishShow)
 	if 0 == count {
-		log.Printf("------client index=%d, pid=%d has no target fish, specified type %d, all fish count=%d, types is %v\n",
+		log.Printf("client index=%d, pid=%d has no target fish, specified type %d, all fish count=%d, types is %v\n",
 			c.Index, c.PtData.PID, dstType, len(c.pond.mapFish), mapFishType)
 		return 0
 	}
-	//log.Printf("------client index=%d, pid=%d target fish count=%d\n", c.Index, c.PtData.PID, count)
+	//log.Printf("client index=%d, pid=%d target fish count=%d\n", c.Index, c.PtData.PID, count)
 	index := rand.Int31n(int32(count))
 	return fishShow[index]
 }
@@ -644,11 +651,14 @@ func (c *FClient) processLaunchMissile(p *protocol.Protocol) bool {
 	c.gameCurrency = uint64(s2cMissile.Currency)
 	log.Printf("client index=%d, pid=%d launch missile successfully, model id=%d, left=%d, current money=%d\n",
 		c.Index, c.PtData.PID, s2cMissile.ModelID, c.Items[s2cMissile.ModelID], c.gameCurrency)
-	if ini.FishSetting.LaunchMode == 2 && 0 == c.Items[s2cMissile.ModelID] {
-		if 0 == c.Items[s2cMissile.ModelID] {
-			c.Dialer.Disconnect()
-			c.isWork = false
+	if ini.FishSetting.LaunchMode == 2 {
+		// 遍历道具列表，只要有一种道具数量不为0，就继续
+		for _, id := range ini.FishSetting.Missiles {
+			if c.Items[uint32(id)] > 0 {
+				return true
+			}
 		}
+		c.disconnect("client index=%d, pid=%d, char id=%d has no enough missiles, will exit \n", c.Index, c.PtData.PID, c.charID)
 	}
 	return true
 }

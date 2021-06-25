@@ -150,6 +150,10 @@ func TestOther(t *testing.T) {
 	fmt.Println(n)
 
 	m := make(map[int]int)
+	if m[4] > 1 {
+		m[4] = 2
+	}
+	fmt.Println(m[4])
 	m[1] = 3
 	m[2] = 4
 	m[3] = 5

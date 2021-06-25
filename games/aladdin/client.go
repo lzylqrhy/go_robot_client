@@ -57,23 +57,27 @@ func (c *FClient)OnDisconnected()  {
 func (c *FClient)ProcessProtocols(p *protocol.Protocol) bool {
 	//log.Printf("cmd:0x%04x\n", p.Head.Cmd)
 	isCommon, isOK := c.ProcessCommonProtocols(p)
-	if isCommon {
-		return isOK
+	if !isCommon {
+		switch p.Head.Cmd {
+		case protocols.S2CLoginCode:
+			isOK = c.processLogin(p)
+		case protocols.AladdinPlayerCode:
+			isOK = c.processPlayerInfo(p)
+		case protocols.EnterRoomCode:
+			isOK = c.processEnterRoom(p)
+		case protocols.AladdinJoinRoomCode:
+			isOK = c.processJoinRoom(p)
+		case protocols.AladdinPlayCode:
+			isOK = c.processPlayResult(p)
+		default:
+			log.Printf("cmd:0x%04x don't be processed\n", p.Head.Cmd)
+			isOK = true
+		}
 	}
-	switch p.Head.Cmd {
-	case protocols.S2CLoginCode:
-		return c.processLogin(p)
-	case protocols.AladdinPlayerCode:
-		return c.processPlayerInfo(p)
-	case protocols.EnterRoomCode:
-		return c.processEnterRoom(p)
-	case protocols.AladdinJoinRoomCode:
-		return c.processJoinRoom(p)
-	case protocols.AladdinPlayCode:
-		return c.processPlayResult(p)
+	if !isOK {
+		log.Printf("process cmd:0x%04x unsuccessfully \n", p.Head.Cmd)
 	}
-	log.Printf("cmd:0x%04x don't process\n", p.Head.Cmd)
-	return true
+	return isOK
 }
 
 func (c *FClient) processLogin(p *protocol.Protocol) bool {
