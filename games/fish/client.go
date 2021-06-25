@@ -151,7 +151,7 @@ func (c *FClient)ProcessProtocols(p *protocol.Protocol) bool {
 		}
 	}
 	if !isOK {
-		log.Printf("process cmd:0x%04x unsuccessfully \n", p.Head.Cmd)
+		log.Printf("process cmd:0x%04x unsuccessfully, will exit\n", p.Head.Cmd)
 	}
 	return isOK
 }
